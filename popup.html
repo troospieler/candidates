@@ -1,0 +1,31 @@
+<link href="popup.css" rel="stylesheet" type="text/css" />
+<script type="module" src="popup.js"></script>
+
+<div class="container">
+  <div>
+    <form
+      id="loginForm"
+      class="login-form"
+      style="display: none"
+      action=""
+      method="POST"
+    >
+      <div class="form-title"></div>
+      <input name="email" id="email" type="text" style="margin-bottom: 5px" />
+      <input
+        name="password"
+        id="password"
+        type="text"
+        style="margin-bottom: 5px"
+      />
+      <button class="login-btn" id="loginBtn" type="submit"></button>
+    </form>
+    <div class="logout-container" id="logOut" style="display: none">
+      <div class="logout-title"></div>
+      <button style="cursor: pointer; margin-left: 5px;" id="logoutBtn">
+        <i class="logout-text"></i>
+        <img width="10" height="10" src="assets/send.png" alt="i" />
+      </button>
+    </div>
+  </div>
+</div>

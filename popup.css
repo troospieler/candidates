@@ -1,0 +1,40 @@
+.container {
+  width: 280px;
+  color: #314d3e;
+}
+
+.form-title {
+  font-size: 14px;
+  font-weight: bold;
+  padding: 8px;
+}
+
+.login-btn {
+  display: block;
+}
+
+.processing {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.logout-title {
+  margin-bottom: 5px;
+}
+
+.add-candidate-btn {
+  position: fixed;
+  margin: 10px;
+  border: 2px dashed transparent;
+  right: 30px;
+  bottom: 10px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  z-index: 1 !important;
+}
+
+.add-candidate-btn:hover {
+  border-color: blue;
+  border-radius: 10px;
+}
