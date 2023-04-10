@@ -1,6 +1,6 @@
 {
-  "name": "Кандидат",
-  "version": "0.0.2",
+  "name": "Helper для кандидатів",
+  "version": "0.0.3",
   "description": "Додавайте кандидатів до ats напряму з інтеграцій",
   "permissions": ["storage", "tabs"],
   "host_permissions": [
@@ -18,7 +18,9 @@
     {
       "matches": ["https://www.work.ua/resumes/*"],
       "js": ["contentScript.js"],
-      "css": ["popup.css"]
+      "css": ["popup.css"],
+      "run_at": "document_start",
+      "match_about_blank": true
     }
   ],
   "web_accessible_resources": [

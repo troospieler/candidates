@@ -1,3 +1,7 @@
+// chrome.tabs only available from popup.js script
+// consider moving getTab() logic to popup.js
+// and maybe move getAllTabs() logic to popup.js too
+
 export async function getTab() {
   let queryOptions = { active: true, currentWindow: true };
   let [tab] = await chrome.tabs.query(queryOptions);
@@ -11,7 +15,19 @@ export async function getAllTabs() {
   return tabs;
 }
 
+export function getEnvQueryParam(url) {
+  return url.split('?')[1]?.split('&')?.find(el => el.startsWith('env='))?.split('=')[1] ?? null
+}
+
+export async function chromeStorageToken() {
+  const tokenData = await chrome.storage.local.get("atsToken")
+  return tokenData
+}
+
 export const loginToAts = async (input) => {
+  const tab = await getTab()
+  const env = getEnvQueryParam(tab.url)
+
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
 
@@ -53,7 +69,7 @@ export const loginToAts = async (input) => {
 
   try {
     const response = await fetch(
-      "https://ats-api.dev.rabota.ua/graphql/",
+      `https://ats-api${env ? '.' + env : ''}.rabota.ua/graphql/`,
       requestOptions
     );
     const result = response.json()
@@ -66,7 +82,7 @@ export const loginToAts = async (input) => {
 };
 
 export const addCandidate = async (input) => {
-  const { resumeId, resumeText, token } = input;
+  const { resumeId, resumeText, token, env } = input;
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
   myHeaders.append("Authorization", token);
@@ -82,7 +98,7 @@ export const addCandidate = async (input) => {
   };
   try {
     const response = await fetch(
-      "https://ats-api.dev.rabota.ua/resume/import",
+      `https://ats-api${env ? '.' + env : ''}.rabota.ua/resume/import`,
       requestOptions
     );
     const result = await response.json();

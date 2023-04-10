@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           const loginResponse = await loginToAts(input);
           console.log(loginResponse)
           const token =
-            loginResponse.data?.login?.loginResult?.bearerToken ?? null;
+            loginResponse?.data?.login?.loginResult?.bearerToken ?? null;
           if (token) {
             form.style.display = "none";
             chrome.storage.local.set({
@@ -81,7 +81,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
             showLogoutBlock(id);
           } else {
-            proceedErrors(loginResponse.data?.login?.errors ?? null);
+            //implement errors handling
+            proceedErrors(loginResponse?.data?.login?.errors ?? null);
           }
 
           form.classList.remove("processing");

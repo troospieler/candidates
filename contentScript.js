@@ -3,8 +3,8 @@
   let resumeContainer = null;
 
   chrome.runtime.onMessage.addListener((obj, sender, response) => {
-    console.log(obj)
-    console.log(sender)
+    console.log(obj);
+    console.log(sender);
     const { type, resumeId } = obj;
     if (type === "SEND") {
       currentResumeId = resumeId;
@@ -13,6 +13,20 @@
     if (type === "LOGOUT") {
       const btn = document.querySelector(".add-candidate-btn");
       btn?.remove();
+    }
+  });
+
+  // show cta button if user is logged in
+  document.addEventListener("DOMContentLoaded", async () => {
+    const src = chrome.runtime.getURL("utils.js");
+    const utils = await import(src);
+    const data = await utils.chromeStorageToken(document.location.search);
+    if (typeof data === "object" && !!Object.keys(data).length) {
+      // move logic of getting resume id from work resume page to utils.js
+      // it is also present in popup.js starting on line 50
+      const firstPart = document.location.href.split("resumes/")[1];
+      const currentResumeId = firstPart.slice(0, firstPart.indexOf("/"));
+      newResumeOpened(currentResumeId);
     }
   });
 
@@ -40,7 +54,7 @@
     const currentResumeContainer = document.getElementById(
       `resume_${resumeId}`
     );
-    console.log({currentResumeContainer})
+    console.log({ currentResumeContainer });
 
     if (
       currentResumeContainer &&
@@ -54,9 +68,9 @@
       addCandidateBtn.title = "натисніть, щоб додати кандидата до ats";
       // resumeContainer.prepend(addCandidateBtn); -- used it previously, now appending to body
       // left for further consideration based on design of CTA
-      document.body.prepend(addCandidateBtn)
+      document.body.prepend(addCandidateBtn);
       addCandidateBtn.addEventListener("click", async () => {
-        addCandidateBtn.classList.add('processing')
+        addCandidateBtn.classList.add("processing");
         const resume = getCandidateInfo(resumeContainer);
         const valueForStorage = { resumeId, resumeText: resume.text };
 
@@ -71,10 +85,11 @@
 
         const src = chrome.runtime.getURL("utils.js");
         const utils = await import(src);
-        const result = await utils.addCandidate(input);
+        const env = await utils.getEnvQueryParam(document.location.search);
+        const result = await utils.addCandidate({ ...input, env });
 
         console.log(result);
-        addCandidateBtn.classList.remove('processing')
+        addCandidateBtn.classList.remove("processing");
         // from this moment --  we will try to send resume to api to be added to ats
         // in case of success
         // -- will maybe use chrome.storage.local.remove(resumeId)

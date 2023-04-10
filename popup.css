@@ -1,16 +1,44 @@
-.container {
-  width: 280px;
+body {
+  display: flex;
+  /* margin: 0;
+  padding: 0; */
+}
+.extension-container {
+  width: 220px;
   color: #314d3e;
+  min-height: 100px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.extension-content-wrapper {
+  flex-grow: 1;
 }
 
 .form-title {
+  padding: 8px;
+  text-align: center;
   font-size: 14px;
   font-weight: bold;
-  padding: 8px;
 }
 
 .login-btn {
   display: block;
+  font-weight: bold;
+  font-size: larger;
+  color: white;
+  padding: 5px 10px;
+  background-color: #ff5252;
+  border-radius: 5px;
+  border: none;
+  outline: none;
+
+  width: 80%;
+  margin: 0 auto;
+
+  cursor: pointer;
 }
 
 .processing {
@@ -19,8 +47,32 @@
 }
 
 .logout-title {
+  text-align: center;
+  font-size: larger;
   margin-bottom: 5px;
+  margin-left: 5px;
 }
+
+.logout-btn {
+  display: block;
+  font-weight: bold;
+  font-size: larger;
+  color: white;
+  padding: 5px 10px;
+  background-color: #ff5252;
+  border-radius: 5px;
+  border: none;
+  outline: none;
+
+  width: 80%;
+  margin: 0 auto;
+
+  cursor: pointer;
+}
+
+.logout-btn:hover, .login-btn:hover {
+  background-color: #D93A3B;
+ }
 
 .add-candidate-btn {
   position: fixed;
@@ -37,4 +89,16 @@
 .add-candidate-btn:hover {
   border-color: blue;
   border-radius: 10px;
+}
+
+input {
+  display: block;
+  width: 80%;
+  margin: 10px auto;
+}
+
+input:focus {
+  border: 2px solid black;
+  border-radius: 2px;
+  outline: none;
 }
