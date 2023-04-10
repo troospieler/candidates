@@ -92,7 +92,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   } else {
-    const container = document.querySelector(".container");
+    const container = document.querySelector(".extension-container");
 
     container.innerHTML =
       '<div class="title">Перейдіть на сторінку резюме на бажаному ресурсі</div>';

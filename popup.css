@@ -6,7 +6,7 @@ body {
 .extension-container {
   width: 220px;
   color: #314d3e;
-  min-height: 100px;
+  min-height: 80px;
 
   display: flex;
   justify-content: center;
