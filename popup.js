@@ -76,6 +76,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             loginResponse?.data?.login?.loginResult?.bearerToken ?? null;
           if (token) {
             form.style.display = "none";
+            // set token to localstorage if possible
+            // and use as backup
             chrome.storage.local.set({
               atsToken: token,
             });

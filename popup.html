@@ -1,28 +1,188 @@
-<link href="popup.css" rel="stylesheet" type="text/css" />
-<script type="module" src="popup.js"></script>
-
-<div class="extension-container">
-  <div class="extension-content-wrapper">
-    <form
-      id="loginForm"
-      class="login-form"
-      style="display: none"
-      action=""
-      method="POST"
-    >
-      <div class="form-title"></div>
-      <input name="email" id="email" type="text" />
-      <input name="password" id="password" type="text" />
-      <button class="login-btn" id="loginBtn" type="submit"></button>
-    </form>
-    <div class="logout-container" id="logOut" style="display: none">
-      <div class="logout-title"></div>
-      <button
-        class="logout-btn"
-        id="logoutBtn"
-      >
-        <span class="logout-text"></span>
-      </button>
+<div class="plugin-window hide">
+  <div class="ats-user-info hide">
+    <div class="user-info-container">
+      <b class="user-company"></b>
+      <span class="user-name"></span>
     </div>
+    <img
+      class="close-plugin-btn"
+      src="https://images.cf-rabota.com.ua/alliance-ats/plugin/close-cross.png"
+      alt="close"
+    />
+  </div>
+  <!-- LOGIN PLUGIN APPEARANCE -->
+  <div class="entrance-window hide">
+    <img
+      class="entrance-figure"
+      src="https://images.cf-rabota.com.ua/alliance-ats/plugin/entrance-figure.png"
+      alt="pic"
+    />
+    <div class="entrance-window-heading">
+      <img
+        width="120"
+        src="https://images.cf-rabota.com.ua/alliance-ats/plugin/helper-logo.png"
+        alt=""
+      />
+      <span class="entrance-heading-separator"></span>
+      <span>Кандидати</span>
+    </div>
+    <div class="helper-explanatory">Помічник з додавання кандидатів</div>
+    <div class="login-form-container">
+      <form id="loginForm" class="login-form">
+        <div class="entrance">Вхід</div>
+        <div class="entrance-explainer">
+          Скористайтеся вашими даними для входу на robota.ua
+        </div>
+        <input
+          class="input"
+          placeholder="Email"
+          name="email"
+          id="email"
+          type="text"
+          required
+        />
+        <input
+          class="input"
+          placeholder="Пароль"
+          name="password"
+          id="password"
+          type="text"
+          required
+        />
+        <div class="invalid-creds plugin-small-text hide">
+          Ви ввели невірний пароль або логін
+        </div>
+        <button class="login-btn" id="loginBtn" type="submit">Увійти</button>
+      </form>
+    </div>
+
+    <div class="yellow-circle"></div>
+  </div>
+  <!-- FETCHING STATE -->
+  <div class="fetching-state hide">
+    <div>HERE WILL BE SOME ANIMATION</div>
+  </div>
+
+  <!-- CANDIDATE INFO APPEARANCE -->
+  <div class="candidate-info hide">
+    <form class="candidate-form" action="" method="POST">
+      <div class="candidate-section-title">Дані кандидата</div>
+      <label class="input-label">Ім’я та прізвище</label>
+      <input
+        class="input"
+        name="candidate-name"
+        id="candidateInfoName"
+        type="text"
+      />
+      <label class="input-label required-value">Електронна пошта</label>
+      <input
+        class="input"
+        name="candidate-emails"
+        id="candidateInfoEmail"
+        type="text"
+      />
+      <div id="obligatoryEmail" class="empty-value hide">
+        Пошта обов’язкова, щоб додати до бази
+      </div>
+      <div id="incorrectEmail" class="not-correct-value hide">
+        Будь-ласка, перевірте формат пошти
+      </div>
+
+      <div class="candidate-phone-container">
+        <label class="input-label">Номер телефону</label>
+        <input
+          class="input"
+          name="candidate-phones"
+          id="candidateInfoPhone"
+          type="text"
+        />
+      </div>
+
+      <label class="candidate-section-title">Додати до бази кандидатів</label>
+      <div class="select-container">
+        <select name="ats-destination" class="ats-destination-select">
+          <option value="">Не обрано</option>
+          <option id="db" value="db">База кандидатів</option>
+          <option value="separator" disabled>---</option>
+        </select>
+      </div>
+
+      <div id="destinationNotPicked" class="empty-value hide">
+        Оберіть куди ви хочете додати кандидата
+      </div>
+      <div id="errorOnAdding" class="not-correct-value hide">
+        Сталась помилка. Будь-ласка, повторіть спробу
+      </div>
+
+      <div class="already-in-base-notification hide">
+        <div class="notificaton">
+          <img
+            width="20"
+            src="https://images.cf-rabota.com.ua/alliance-ats/plugin/success-check.png"
+            alt="success"
+          />
+          <span class="plugin-small-text">Кандидат є в базі Helper</span>
+        </div>
+        <a class="ats-in-base-link" href="/" target="_blank">
+          <img
+            width="15"
+            src="https://images.cf-rabota.com.ua/alliance-ats/plugin/black-eye.png"
+            alt="link"
+          />
+        </a>
+      </div>
+
+      <button class="add-candidate-cta">
+        <span>
+          <img
+            width="24"
+            height="24"
+            src="https://images.cf-rabota.com.ua/alliance-ats/plugin/robota-logo.png"
+            alt=""
+          />
+        </span>
+        <span style="margin-left: 10px"> Додати кандидата в Helper</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- ADD CUCCESS WINDOW -->
+
+  <div class="add-success hide">
+    <b class="added-candidate-name"></b>
+    <div class="success-notification">
+      <img
+        width="20"
+        src="https://images.cf-rabota.com.ua/alliance-ats/plugin/success-check.png"
+        alt="success"
+      />
+      <span>Кандидата збережено в Helper</span>
+    </div>
+    <a
+      href="/"
+      class="go-to-candidate-link"
+      id="loginBtn"
+      type="submit"
+      target="_blank"
+    >
+      <img
+        width="20"
+        src="https://images.cf-rabota.com.ua/alliance-ats/plugin/white-eye.png"
+        alt="img"
+      />
+      <b>Переглянути в Helper</b>
+    </a>
+    <button class="close-on-success-btn">Закрити</button>
   </div>
 </div>
+
+<button class="cta-button">
+  <img
+    width="40"
+    height="39"
+    src="https://images.cf-rabota.com.ua/alliance-ats/plugin/Plugin-CTA-Button.png"
+    alt=""
+  />
+</button>
+
+<script type="module" src="contentScript.js"></script>

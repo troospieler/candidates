@@ -1,14 +1,55 @@
-(() => {
+(async () => {
   let currentResumeId = "";
   let resumeContainer = null;
+  let isResumeFound = false;
+  let currentCandidate = null;
+  let token = null;
+  let hasCandidateEmailError = false;
+  let hasAtsDestinationError = false;
+  let isInDataBase = false;
+  // const PHONE_PATTERN =
+  //   /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im;
+  const EMAIL_PATTERN = /^[\w-]+[_.\-\w]*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
 
-  chrome.runtime.onMessage.addListener((obj, sender, response) => {
-    console.log(obj);
-    console.log(sender);
-    const { type, resumeId } = obj;
-    if (type === "SEND") {
-      currentResumeId = resumeId;
-      newResumeOpened(currentResumeId);
+  // get access to utils methods
+  const src = chrome.runtime.getURL("utils.js");
+  const utils = await import(src);
+
+  //injecting popup.html to current web page
+  await fetch(chrome.runtime.getURL("popup.html"))
+    .then((response) => response.text())
+    .then((html) => {
+      const wrapper = document.createElement("div");
+      wrapper.classList.add("plugin-window-wrapper");
+      wrapper.innerHTML = html;
+      document.body.appendChild(wrapper);
+    })
+    .catch((error) => console.error(error));
+
+  // changing view ==> hide cta and show plugin / show cta and hide plugin
+  const triggerAppearance = () => {
+    const ctaBtn = document.querySelector(".cta-button");
+    const pluginWindow = document.querySelector(".plugin-window");
+
+    ctaBtn.classList.toggle("hide");
+    pluginWindow.classList.toggle("hide");
+    const select = document.querySelector(".ats-destination-select");
+    console.log(select.length)
+  };
+
+  const hideSuccess = () => {
+    const candidateInfoBlock = document.querySelector(".candidate-info");
+    const successBlock = document.querySelector(".add-success");
+    candidateInfoBlock.classList.remove("hide");
+    successBlock.classList.add("hide");
+  };
+
+  // listening for events to trigger actions
+  chrome.runtime.onMessage.addListener((message) => {
+    const { type } = message;
+    if (type === "ICON_CLICKED") {
+      triggerAppearance();
+      onPluginOpen();
     }
     if (type === "LOGOUT") {
       const btn = document.querySelector(".add-candidate-btn");
@@ -16,87 +57,319 @@
     }
   });
 
-  // show cta button if user is logged in
+  //waiting for dom to bo loaded and then implement logic
   document.addEventListener("DOMContentLoaded", async () => {
-    const src = chrome.runtime.getURL("utils.js");
-    const utils = await import(src);
-    const data = await utils.chromeStorageToken(document.location.search);
-    if (typeof data === "object" && !!Object.keys(data).length) {
-      // move logic of getting resume id from work resume page to utils.js
-      // it is also present in popup.js starting on line 50
-      const firstPart = document.location.href.split("resumes/")[1];
-      const currentResumeId = firstPart.slice(0, firstPart.indexOf("/"));
-      newResumeOpened(currentResumeId);
+    const tokenFromStorage = utils.localstorageToken();
+    token = tokenFromStorage ?? null;
+
+    const entranceWindowBlock = document.querySelector(".entrance-window");
+    const fetchingStateBlock = document.querySelector(".fetching-state");
+    const candidateInfoBlock = document.querySelector(".candidate-info");
+
+    const firstPart = document.location.href.split("resumes/")[1];
+    currentResumeId = firstPart.slice(0, firstPart.indexOf("/"));
+
+    // INITIALIZING VIEW ON PAGE START
+    if (!token) {
+      entranceWindowBlock.classList.remove("hide");
+    } else if (!currentCandidate) {
+      fetchingStateBlock.classList.remove("hide");
+    } else {
+      candidateInfoBlock.classList.remove("hide");
     }
+
+    //listening for cta button click to show popup and implement logic
+    const ctaBtn = document.querySelector(".cta-button");
+    ctaBtn.addEventListener("click", async () => {
+      triggerAppearance();
+      onPluginOpen();
+    });
   });
 
-  const getStorage = () => {
-    return new Promise((resolve) => {
-      chrome.storage.local.get(null, (v) => {
-        resolve(v);
+  function onPluginOpen() {
+    if (token) {
+      prefillCandidateForm(currentResumeId);
+    } else {
+      const lofinForm = document.querySelector("#loginForm");
+      lofinForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        lofinForm.classList.add("processing");
+        const credentialsError = document.querySelector(".invalid-creds");
+        credentialsError.classList.add("hide");
+        const input = utils.getFormValue(lofinForm);
+        const loginResponse = await utils.login(document.location.href, input);
+        const token =
+          loginResponse?.data?.login?.loginResult?.bearerToken ?? null;
+        if (token) {
+          const tokenValueForStorage = `Bearer ${token}`;
+          localStorage.setItem("atsToken", tokenValueForStorage);
+          const entranceWindowBlock =
+            document.querySelector(".entrance-window");
+          entranceWindowBlock.classList.add("hide");
+          const fetchingStateBlock = document.querySelector(".fetching-state");
+          fetchingStateBlock.classList.remove("hide");
+          prefillCandidateForm(currentResumeId);
+        } else {
+          const errors = loginResponse?.data?.login?.errors ?? [];
+          if (
+            errors.length &&
+            errors.find(
+              (errorItem) =>
+                errorItem.__typename === "CredentialsAreInvalidError"
+            )
+          ) {
+            credentialsError.classList.remove("hide");
+          }
+        }
+
+        lofinForm.classList.remove("processing");
       });
+    }
+  }
+
+  async function prefillCandidateForm(resumeId) {
+    if (!currentCandidate) {
+      resumeContainer = await utils.getWorkResumeContainer(resumeId);
+      const resume = getCandidateInfo(resumeContainer);
+      if (resume && !isResumeFound) {
+        isResumeFound = true;
+
+        currentCandidate = {};
+        currentCandidate.text = resume.text;
+
+        const name =
+          document.querySelector(`#resume_${resumeId} div.row div h1`)
+            ?.innerText ?? null;
+        if (name) {
+          currentCandidate.name = name;
+          const candidateName = document.querySelector("#candidateInfoName");
+          if (candidateName && candidateName instanceof HTMLInputElement) {
+            candidateName.value = name;
+          }
+        }
+
+        const contacts = resume?.children?.find(
+          (el) =>
+            el.text.toLowerCase().includes("телефон") ||
+            el.text.toLowerCase().includes("пошта")
+        )?.children;
+        if (contacts) {
+          const phone = contacts.find((el) =>
+            el.text.toLowerCase().includes("телефон")
+          );
+          if (phone) {
+            const indexOfPhone = contacts.indexOf(phone);
+            const phoneNumber =
+              typeof indexOfPhone === "number"
+                ? contacts[indexOfPhone + 1].text
+                : null;
+            const phoneInput = document.querySelector("#candidateInfoPhone");
+            if (phoneInput && phoneInput instanceof HTMLInputElement) {
+              phoneInput.value = phoneNumber;
+            }
+            currentCandidate.phones = [phoneNumber];
+          }
+          const email = contacts.find((el) =>
+            el.text.toLowerCase().includes("пошта")
+          );
+          if (email) {
+            const indexOfEmail = contacts.indexOf(email);
+            const emailValue =
+              typeof indexOfEmail === "number"
+                ? contacts[indexOfEmail + 1].text
+                : null;
+            const emailInput = document.querySelector("#candidateInfoEmail");
+            if (emailInput && emailInput instanceof HTMLInputElement) {
+              emailInput.value = emailValue;
+            }
+            currentCandidate.emails = [emailValue];
+          }
+        }
+
+        token = utils.localstorageToken() ?? null;
+        if (token) {
+          const userInfo = utils.parseJwt(token);
+          const userName = userInfo.CompanyName;
+          const companyName = userInfo.UserName;
+          const company = document.querySelector(".user-company");
+          company.innerText = companyName + ", ";
+          const user = document.querySelector(".user-name");
+          user.innerText = userName;
+        }
+
+        const select = document.querySelector(".ats-destination-select");
+        const notPicked = document.querySelector("#destinationNotPicked");
+        select.addEventListener("change", () => {
+          notPicked.classList.add("hide");
+        });
+
+        await patchSelectWithProjects(select);
+
+        const candidateForm = document.querySelector(".candidate-form");
+        candidateForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          hasAtsDestinationError = false;
+          hasCandidateEmailError = false;
+
+          const obligatoryEmail = document.querySelector("#obligatoryEmail");
+          const incorrectEmail = document.querySelector("#incorrectEmail");
+
+          const formValue = utils.getFormValue(candidateForm);
+
+          // checking validity
+          if (!formValue["ats-destination"]) {
+            hasAtsDestinationError = true;
+            notPicked.classList.remove("hide");
+          }
+
+          if (!formValue["candidate-emails"]) {
+            hasCandidateEmailError = true;
+            obligatoryEmail.classList.remove("hide");
+            incorrectEmail.classList.add("hide");
+          } else if (!EMAIL_PATTERN.test(formValue["candidate-emails"])) {
+            hasCandidateEmailError = true;
+            incorrectEmail.classList.remove("hide");
+            obligatoryEmail.classList.add("hide");
+          }
+
+          if (!hasCandidateEmailError) {
+            obligatoryEmail.classList.add("hide");
+            incorrectEmail.classList.add("hide");
+          }
+
+          if (hasCandidateEmailError || hasAtsDestinationError) {
+            return;
+          }
+          const submitInput = {
+            source: "Work",
+            id: currentResumeId,
+            text: currentCandidate.text,
+            fullName: formValue["candidate-name"]?.length
+              ? formValue["candidate-name"]
+              : null,
+            phones: [formValue["candidate-phones"]],
+            emails: [formValue["candidate-emails"]],
+            ...(formValue["ats-destination"] === "db"
+              ? {}
+              : { projectId: formValue["ats-destination"] }),
+          };
+
+          const cta = document.querySelector(".add-candidate-cta");
+          cta.classList.add("processing");
+          const result = await utils.addCandidate(
+            { ...submitInput },
+            utils.getEnvQueryParam(document.location.href),
+            token
+          );
+
+          if (result && !result.errors) {
+            const nameContainer = document.querySelector(
+              ".added-candidate-name"
+            );
+            nameContainer.innerHTML = result.parsedResume.fullName;
+            const goToCandidate = document.querySelector(
+              ".go-to-candidate-link"
+            );
+            goToCandidate.href = result.candidate.url;
+            const successBlock = document.querySelector(".add-success");
+            const candidateInfoBlock =
+              document.querySelector(".candidate-info");
+            successBlock.classList.remove("hide");
+            candidateInfoBlock.classList.add("hide");
+            const closeBtn = document.querySelector(".close-on-success-btn");
+            closeBtn.addEventListener("click", async () => {
+              triggerAppearance();
+              hideSuccess();
+              if (!isInDataBase) {
+                isInDataBase = true
+                const selectOptions = select.options;
+                for (let i = selectOptions.length - 1; i >= 3; i--) {
+                  selectOptions[i].remove();
+                }
+                await patchSelectWithProjects(select);
+              }
+            });
+          } else {
+            const errorOnAdding = document.querySelector("#errorOnAdding");
+            errorOnAdding.classList.remove("hide");
+          }
+          cta.classList.remove("processing");
+        });
+        onCandidateFound();
+      }
+    }
+  }
+
+  async function patchSelectWithProjects(selectItem) {
+    const appearance = await utils.getAtsAppearance(document.location.href, {
+      token,
+      phones: currentCandidate.phones,
+      emails: currentCandidate.emails,
     });
-  };
+    if (appearance) {
+      if (appearance.isExistsInCandidatesDatabase) {
+        const inBase = document.querySelector(".already-in-base-notification");
+        inBase.classList.remove("hide");
+        const link = document.querySelector(".ats-in-base-link");
+        link.href = appearance.candidateInDatabaseUrl;
+      }
+
+      if (Array.isArray(appearance.projects)) {
+        appearance.projects.forEach((item) => {
+          const option = document.createElement("option");
+          option.value = item.id;
+
+          const optionInfo = document.createElement("div");
+          const projectName = document.createElement("div");
+          projectName.innerHTML = item.name;
+          const projectAdditionalInfo = document.createElement("div");
+          projectAdditionalInfo.innerHTML =
+            ", " + item.cityName + ", " + item.ownerName;
+          optionInfo.classList.add("select-project-option-item");
+          optionInfo.appendChild(projectName);
+          optionInfo.appendChild(projectAdditionalInfo);
+          option.appendChild(optionInfo);
+          selectItem.add(option);
+        });
+      }
+    }
+  }
+
+  function onCandidateFound() {
+    const fetchingStateBlock = document.querySelector(".fetching-state");
+    fetchingStateBlock.classList.add("hide");
+    const candidateInfoBlock = document.querySelector(".candidate-info");
+    candidateInfoBlock.classList.remove("hide");
+    const info = document.querySelector(".ats-user-info");
+    info.classList.remove("hide");
+    const closeButton = document.querySelector(".close-plugin-btn");
+    closeButton.addEventListener("click", () => {
+      triggerAppearance();
+      // condition of click on close when we are on success page
+      if (candidateInfoBlock.classList.contains("hide")) {
+        hideSuccess();
+      }
+    });
+  }
+
+  // const getStorage = () => {
+  //   return new Promise((resolve) => {
+  //     chrome.storage.local.get(null, (v) => {
+  //       resolve(v);
+  //     });
+  //   });
+  // };
 
   // retrieve resume
   // left for further implementation
-  const getResumeFromStorage = () => {
-    return new Promise((resolve) => {
-      chrome.storage.local.get([currentResumeId], (obj) => {
-        resolve(obj[currentResumeId] ? JSON.parse(obj[currentResumeId]) : null);
-      });
-    });
-  };
-
-  const newResumeOpened = async (resumeId) => {
-    // resumeInStorage left for further implementation
-    const resumeInStorage = await getResumeFromStorage();
-    const currentResumeContainer = document.getElementById(
-      `resume_${resumeId}`
-    );
-    console.log({ currentResumeContainer });
-
-    if (
-      currentResumeContainer &&
-      !document.querySelector(".add-candidate-btn")
-    ) {
-      resumeContainer = currentResumeContainer;
-      const addCandidateBtn = document.createElement("img");
-
-      addCandidateBtn.src = chrome.runtime.getURL("assets/send.png");
-      addCandidateBtn.className = "add-candidate-btn";
-      addCandidateBtn.title = "натисніть, щоб додати кандидата до ats";
-      // resumeContainer.prepend(addCandidateBtn); -- used it previously, now appending to body
-      // left for further consideration based on design of CTA
-      document.body.prepend(addCandidateBtn);
-      addCandidateBtn.addEventListener("click", async () => {
-        addCandidateBtn.classList.add("processing");
-        const resume = getCandidateInfo(resumeContainer);
-        const valueForStorage = { resumeId, resumeText: resume.text };
-
-        chrome.storage.local.set({
-          [resumeId]: JSON.stringify(valueForStorage),
-        });
-        const storage = await getStorage();
-        const input = {
-          ...valueForStorage,
-          token: "Bearer " + storage.atsToken,
-        };
-
-        const src = chrome.runtime.getURL("utils.js");
-        const utils = await import(src);
-        const env = await utils.getEnvQueryParam(document.location.search);
-        const result = await utils.addCandidate({ ...input, env });
-
-        console.log(result);
-        addCandidateBtn.classList.remove("processing");
-        // from this moment --  we will try to send resume to api to be added to ats
-        // in case of success
-        // -- will maybe use chrome.storage.local.remove(resumeId)
-        // -- or check for existence resumeId in storage and if present -- show some notification before api call
-      });
-    }
-  };
+  // const getResumeFromStorage = () => {
+  //   return new Promise((resolve) => {
+  //     chrome.storage.local.get([currentResumeId], (obj) => {
+  //       resolve(obj[currentResumeId] ? JSON.parse(obj[currentResumeId]) : null);
+  //     });
+  //   });
+  // };
 
   const getCandidateInfo = (element = resumeContainer) => {
     if (element && element instanceof HTMLElement) {
@@ -125,7 +398,17 @@
       return data;
     }
   };
-  // uncomment if newResumeOpened should be called on new 'work.ua/resumes/...' page open
-  // left for further consideration based on requirements
-  // newResumeOpened(currentResumeId)
 })();
+
+// chrome.storage.local.remove("atsToken", async () => {
+//   const error = chrome.runtime.lastError;
+//   if (error) {
+//     console.error(error);
+//   } else {
+//     // window.close();
+//   }
+// });
+
+// chrome.storage.local.set({
+//   atsToken: token,
+// });

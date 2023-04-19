@@ -1,8 +1,8 @@
 {
   "name": "Helper для кандидатів",
-  "version": "0.0.3",
+  "version": "0.0.14",
   "description": "Додавайте кандидатів до ats напряму з інтеграцій",
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "tabs", "scripting", "activeTab"],
   "host_permissions": [
     "https://www.work.ua/resumes/*",
     "https://ats-api.dev.rabota.ua/resume/import"
@@ -25,16 +25,24 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["assets/send.png", "assets/cv.png", "utils.js"],
+      "resources": [
+        "assets/send.png",
+        "assets/cv.png",
+        "assets/plugin-cta-button.png",
+        "utils.js",
+        "popup.html",
+        "candidate.css",
+        "assets/fonts/file.woff2"
+      ],
       "matches": ["<all_urls>"]
     }
   ],
   "icons": {
     "16": "assets/cv.png",
-      "24": "assets/cv.png",
-      "32": "assets/cv.png",
-      "48": "assets/candidate.png",
-      "128": "assets/candidate.png"
+    "24": "assets/cv.png",
+    "32": "assets/cv.png",
+    "48": "assets/candidate.png",
+    "128": "assets/candidate.png"
   },
   "action": {
     "default_icon": {
@@ -44,8 +52,7 @@
       "48": "assets/candidate.png",
       "128": "assets/candidate.png"
     },
-    "default_title": "Кандидат",
-    "default_popup": "popup.html"
+    "default_title": "Кандидат"
   },
   "manifest_version": 3
 }
