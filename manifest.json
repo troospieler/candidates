@@ -18,7 +18,13 @@
     {
       "matches": ["https://www.work.ua/resumes/*"],
       "js": ["contentScript.js"],
-      "css": ["popup.css"],
+      "css": [
+        "popup.css",
+        "entrance.css",
+        "fetching-state.css",
+        "candidate-info.css",
+        "success-window.css"
+      ],
       "run_at": "document_start",
       "match_about_blank": true
     }
@@ -31,8 +37,7 @@
         "assets/plugin-cta-button.png",
         "utils.js",
         "popup.html",
-        "candidate.css",
-        "assets/fonts/file.woff2"
+        "candidate.css"
       ],
       "matches": ["<all_urls>"]
     }

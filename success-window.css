@@ -1,0 +1,57 @@
+.add-success {
+  padding: 20px;
+}
+
+.success-notification {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px 17px;
+  background-color: #ecfff4;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 20px;
+  border-radius: 5px;
+}
+
+.added-candidate-name {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.go-to-candidate-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ff5252;
+  color: white !important;
+  border-radius: 5px;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 0;
+  text-decoration: none !important;
+}
+
+.go-to-candidate-link:visited,
+.go-to-candidate-link:hover,
+.go-to-candidate-link:active {
+  color: white !important;
+  text-decoration: none !important;
+}
+
+.close-on-success-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border: 2px solid #ff5252;
+  color: #ff5252;
+  border-radius: 5px;
+  text-align: center;
+  padding: 10px 0;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 20px;
+}

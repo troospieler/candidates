@@ -51,8 +51,7 @@
       onPluginOpen();
     }
     if (type === "LOGOUT") {
-      const btn = document.querySelector(".add-candidate-btn");
-      btn?.remove();
+      //if logout will be necessary use this message event
     }
   });
 
@@ -318,7 +317,7 @@
         appearance.projects.forEach((item) => {
           const option = document.createElement("option");
           option.value = item.id;
-
+          option.title = item.name
           const optionInfo = document.createElement("div");
           const projectName = document.createElement("div");
           projectName.innerHTML = item.name;
@@ -351,24 +350,6 @@
       }
     });
   }
-
-  // const getStorage = () => {
-  //   return new Promise((resolve) => {
-  //     chrome.storage.local.get(null, (v) => {
-  //       resolve(v);
-  //     });
-  //   });
-  // };
-
-  // retrieve resume
-  // left for further implementation
-  // const getResumeFromStorage = () => {
-  //   return new Promise((resolve) => {
-  //     chrome.storage.local.get([currentResumeId], (obj) => {
-  //       resolve(obj[currentResumeId] ? JSON.parse(obj[currentResumeId]) : null);
-  //     });
-  //   });
-  // };
 
   const getCandidateInfo = (element = resumeContainer) => {
     if (element && element instanceof HTMLElement) {
@@ -411,3 +392,21 @@
 // chrome.storage.local.set({
 //   atsToken: token,
 // });
+
+// const getStorage = () => {
+  //   return new Promise((resolve) => {
+  //     chrome.storage.local.get(null, (v) => {
+  //       resolve(v);
+  //     });
+  //   });
+  // };
+
+  // retrieve resume
+  // left for further implementation
+  // const getResumeFromStorage = () => {
+  //   return new Promise((resolve) => {
+  //     chrome.storage.local.get([currentResumeId], (obj) => {
+  //       resolve(obj[currentResumeId] ? JSON.parse(obj[currentResumeId]) : null);
+  //     });
+  //   });
+  // };
