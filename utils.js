@@ -131,7 +131,7 @@ export async function getAtsAppearance(url, input) {
   myHeaders.append("Authorization", token);
 
   const getString = (arr, prefix) => {
-    return arr.reduce(
+    return (arr ?? []).reduce(
       (acc, item) => `${acc}${acc.length ? "&" : ""}${prefix}=${item}`,
       ""
     );
