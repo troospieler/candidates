@@ -88,14 +88,14 @@
     if (token) {
       prefillCandidateForm(currentResumeId);
     } else {
-      const lofinForm = document.querySelector("#loginForm");
-      lofinForm.addEventListener("submit", async (event) => {
+      const loginForm = document.querySelector("#loginForm");
+      loginForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
-        lofinForm.classList.add("processing");
+        loginForm.classList.add("processing");
         const credentialsError = document.querySelector(".invalid-creds");
         credentialsError.classList.add("hide");
-        const input = utils.getFormValue(lofinForm);
+        const input = utils.getFormValue(loginForm);
         const loginResponse = await utils.login(document.location.href, input);
         const token =
           loginResponse?.data?.login?.loginResult?.bearerToken ?? null;
@@ -121,7 +121,7 @@
           }
         }
 
-        lofinForm.classList.remove("processing");
+        loginForm.classList.remove("processing");
       });
     }
   }
@@ -194,6 +194,8 @@
           company.innerText = companyName + ", ";
           const user = document.querySelector(".user-name");
           user.innerText = userName;
+          const info = document.querySelector(".ats-user-info");
+          info.classList.remove("hide");
         }
 
         const select = document.querySelector(".ats-destination-select");
@@ -280,7 +282,7 @@
               triggerAppearance();
               hideSuccess();
               if (!isInDataBase) {
-                isInDataBase = true
+                isInDataBase = true;
                 const selectOptions = select.options;
                 for (let i = selectOptions.length - 1; i >= 3; i--) {
                   selectOptions[i].remove();
@@ -317,7 +319,7 @@
         appearance.projects.forEach((item) => {
           const option = document.createElement("option");
           option.value = item.id;
-          option.title = item.name
+          option.title = item.name;
           const optionInfo = document.createElement("div");
           const projectName = document.createElement("div");
           projectName.innerHTML = item.name;
@@ -339,8 +341,9 @@
     fetchingStateBlock.classList.add("hide");
     const candidateInfoBlock = document.querySelector(".candidate-info");
     candidateInfoBlock.classList.remove("hide");
-    const info = document.querySelector(".ats-user-info");
-    info.classList.remove("hide");
+    // CHECK IF OK AND DELETE COMMENTED
+    // const info = document.querySelector(".ats-user-info");
+    // info.classList.remove("hide");
     const closeButton = document.querySelector(".close-plugin-btn");
     closeButton.addEventListener("click", () => {
       triggerAppearance();
@@ -394,19 +397,19 @@
 // });
 
 // const getStorage = () => {
-  //   return new Promise((resolve) => {
-  //     chrome.storage.local.get(null, (v) => {
-  //       resolve(v);
-  //     });
-  //   });
-  // };
+//   return new Promise((resolve) => {
+//     chrome.storage.local.get(null, (v) => {
+//       resolve(v);
+//     });
+//   });
+// };
 
-  // retrieve resume
-  // left for further implementation
-  // const getResumeFromStorage = () => {
-  //   return new Promise((resolve) => {
-  //     chrome.storage.local.get([currentResumeId], (obj) => {
-  //       resolve(obj[currentResumeId] ? JSON.parse(obj[currentResumeId]) : null);
-  //     });
-  //   });
-  // };
+// retrieve resume
+// left for further implementation
+// const getResumeFromStorage = () => {
+//   return new Promise((resolve) => {
+//     chrome.storage.local.get([currentResumeId], (obj) => {
+//       resolve(obj[currentResumeId] ? JSON.parse(obj[currentResumeId]) : null);
+//     });
+//   });
+// };
