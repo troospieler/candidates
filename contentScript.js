@@ -34,7 +34,6 @@
     ctaBtn.classList.toggle("hide");
     pluginWindow.classList.toggle("hide");
     const select = document.querySelector(".ats-destination-select");
-    console.log(select.length)
   };
 
   const hideSuccess = () => {
