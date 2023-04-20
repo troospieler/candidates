@@ -1,7 +1,7 @@
 {
   "name": "Helper для кандидатів",
   "version": "0.0.4",
-  "description": "Додавайте кандидатів до ats напряму з інтеграцій",
+  "description": "Додавайте кандидатів до Helper напряму з інтеграцій",
   "permissions": ["storage", "tabs", "scripting", "activeTab"],
   "host_permissions": [
     "https://www.work.ua/resumes/*",
