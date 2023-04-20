@@ -33,6 +33,7 @@
     {
       "resources": [
         "assets/plugin-icon-main.png",
+        "assets/plugin-icon-big.png",
         "utils.js",
         "popup.html",
         "candidate.css"
@@ -45,7 +46,7 @@
     "24": "assets/plugin-icon-main.png",
     "32": "assets/plugin-icon-main.png",
     "48": "assets/plugin-icon-main.png",
-    "128": "assets/plugin-icon-main.png"
+    "128": "assets/plugin-icon-big.png"
   },
   "action": {
     "default_icon": {
@@ -53,9 +54,9 @@
       "24": "assets/plugin-icon-main.png",
       "32": "assets/plugin-icon-main.png",
       "48": "assets/plugin-icon-main.png",
-      "128": "assets/plugin-icon-main.png"
+      "128": "assets/plugin-icon-big.png"
     },
-    "default_title": "Кандидат"
+    "default_title": "Helper для кандидатів"
   },
   "manifest_version": 3
 }
