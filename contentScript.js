@@ -95,7 +95,7 @@
     generalCloseButton.addEventListener("click", () => {
       triggerAppearance();
       // condition of click on close when we are on success page
-      if (!successBlock.classList.contains("hide") && isInDataBase) {
+      if (!successBlock.classList.contains("hide")) {
         hideSuccess();
       }
     });
@@ -346,11 +346,9 @@
     const closeBtn = document.querySelector(".close-on-success-btn");
     const select = document.querySelector(".ats-destination-select");
     closeBtn.addEventListener("click", async () => {
-      console.log({ isInDataBase });
       hideSuccess();
       triggerAppearance();
       if (!isInDataBase) {
-        console.log("in scenarion");
         isInDataBase = true;
         const selectOptions = select.options;
         for (let i = selectOptions.length - 1; i >= 3; i--) {
@@ -366,17 +364,6 @@
     fetchingStateBlock.classList.add("hide");
     const candidateInfoBlock = document.querySelector(".candidate-info");
     candidateInfoBlock.classList.remove("hide");
-    // CHECK IF OK AND DELETE COMMENTED
-    // const info = document.querySelector(".ats-user-info");
-    // info.classList.remove("hide");
-    // const closeButton = document.querySelector(".close-plugin-btn");
-    // closeButton.addEventListener("click", () => {
-    //   triggerAppearance();
-    //   // condition of click on close when we are on success page
-    //   if (candidateInfoBlock.classList.contains("hide")) {
-    //     hideSuccess();
-    //   }
-    // });
   }
 
   const getCandidateInfo = (element = resumeContainer) => {
