@@ -43,19 +43,19 @@
     }
   ],
   "icons": {
-    "16": "assets/cv.png",
-    "24": "assets/cv.png",
-    "32": "assets/cv.png",
-    "48": "assets/candidate.png",
-    "128": "assets/candidate.png"
+    "16": "assets/plugin-icon-main.png",
+    "24": "assets/plugin-icon-main.png",
+    "32": "assets/plugin-icon-main.png",
+    "48": "assets/plugin-icon-main.png",
+    "128": "assets/plugin-icon-main.png"
   },
   "action": {
     "default_icon": {
-      "16": "assets/cv.png",
-      "24": "assets/cv.png",
-      "32": "assets/candidate.png",
-      "48": "assets/candidate.png",
-      "128": "assets/candidate.png"
+      "16": "assets/plugin-icon-main.png",
+      "24": "assets/plugin-icon-main.png",
+      "32": "assets/plugin-icon-main.png",
+      "48": "assets/plugin-icon-main.png",
+      "128": "assets/plugin-icon-main.png"
     },
     "default_title": "Кандидат"
   },
