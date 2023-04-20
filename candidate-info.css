@@ -25,6 +25,7 @@
 .ats-destination-select {
   width: 100%;
   margin-bottom: 0 !important;
+  appearance: auto;
 }
 
 select {
