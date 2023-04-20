@@ -394,34 +394,3 @@
     }
   };
 })();
-
-// chrome.storage.local.remove("atsToken", async () => {
-//   const error = chrome.runtime.lastError;
-//   if (error) {
-//     console.error(error);
-//   } else {
-//     // window.close();
-//   }
-// });
-
-// chrome.storage.local.set({
-//   atsToken: token,
-// });
-
-// const getStorage = () => {
-//   return new Promise((resolve) => {
-//     chrome.storage.local.get(null, (v) => {
-//       resolve(v);
-//     });
-//   });
-// };
-
-// retrieve resume
-// left for further implementation
-// const getResumeFromStorage = () => {
-//   return new Promise((resolve) => {
-//     chrome.storage.local.get([currentResumeId], (obj) => {
-//       resolve(obj[currentResumeId] ? JSON.parse(obj[currentResumeId]) : null);
-//     });
-//   });
-// };

@@ -34,11 +34,11 @@ export async function chromeStorageToken() {
 
 export function localstorageToken() {
   try {
-    const token = localStorage.getItem('atsToken');
-    return token
-  } catch(e) {
-    console.log('no token parsed from localstorage, ', e)
-    return null
+    const token = localStorage.getItem("atsToken");
+    return token;
+  } catch (e) {
+    console.log("no token parsed from localstorage, ", e);
+    return null;
   }
 }
 
@@ -92,7 +92,7 @@ export const login = async (url, input) => {
     return result;
   } catch (error) {
     console.log("error on login", error);
-    return result
+    return result;
   }
 };
 
@@ -102,7 +102,7 @@ export const addCandidate = async (input, env, token) => {
   myHeaders.append("Authorization", token);
   const raw = JSON.stringify({
     source: "Work",
-    ...input
+    ...input,
   });
   const requestOptions = {
     method: "POST",

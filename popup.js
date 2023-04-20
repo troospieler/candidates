@@ -47,8 +47,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const currentTab = await getTab();
   // CHECK IF CANDIDATE EXISTS --> by getting contacts from ui
   if (currentTab.url.includes("work.ua/resumes/")) {
-    const firstPart = currentTab.url.split("resumes/")[1]
-    const id = firstPart.slice(0, firstPart.indexOf('/'));
+    const firstPart = currentTab.url.split("resumes/")[1];
+    const id = firstPart.slice(0, firstPart.indexOf("/"));
 
     const form = document.querySelector("#loginForm");
     const formTitle = document.querySelector(".form-title");
@@ -69,9 +69,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           for (var [key, value] of formData.entries()) {
             input[key] = value;
           }
-          console.log(input)
+          console.log(input);
           const loginResponse = await loginToAts(input);
-          console.log(loginResponse)
+          console.log(loginResponse);
           const token =
             loginResponse?.data?.login?.loginResult?.bearerToken ?? null;
           if (token) {
