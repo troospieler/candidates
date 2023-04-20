@@ -33,7 +33,6 @@
 
     ctaBtn.classList.toggle("hide");
     pluginWindow.classList.toggle("hide");
-    const select = document.querySelector(".ats-destination-select");
   };
 
   const hideSuccess = () => {
@@ -60,9 +59,11 @@
     const tokenFromStorage = utils.localstorageToken();
     token = tokenFromStorage ?? null;
 
+    // get reference to all 4 states of plugin
     const entranceWindowBlock = document.querySelector(".entrance-window");
     const fetchingStateBlock = document.querySelector(".fetching-state");
     const candidateInfoBlock = document.querySelector(".candidate-info");
+    const successBlock = document.querySelector(".add-success");
 
     const firstPart = document.location.href.split("resumes/")[1];
     currentResumeId = firstPart.slice(0, firstPart.indexOf("/"));
@@ -81,6 +82,20 @@
     ctaBtn.addEventListener("click", async () => {
       triggerAppearance();
       onPluginOpen();
+    });
+
+    const closeOnEntranceButton = document.querySelector(".close-on-entrance-plugin-btn");
+    closeOnEntranceButton.addEventListener('click', () => {
+      triggerAppearance();
+    })
+
+    const generalCloseButton = document.querySelector(".close-plugin-btn");
+    generalCloseButton.addEventListener("click", () => {
+      triggerAppearance();
+      // condition of click on close when we are on success page
+      if (!successBlock.classList.contains("hide") && isInDataBase) {
+        hideSuccess();
+      }
     });
   });
 
@@ -282,7 +297,6 @@
               triggerAppearance();
               hideSuccess();
               if (!isInDataBase) {
-                isInDataBase = true;
                 const selectOptions = select.options;
                 for (let i = selectOptions.length - 1; i >= 3; i--) {
                   selectOptions[i].remove();
@@ -290,6 +304,7 @@
                 await patchSelectWithProjects(select);
               }
             });
+            isInDataBase = true;
           } else {
             const errorOnAdding = document.querySelector("#errorOnAdding");
             errorOnAdding.classList.remove("hide");
@@ -344,14 +359,14 @@
     // CHECK IF OK AND DELETE COMMENTED
     // const info = document.querySelector(".ats-user-info");
     // info.classList.remove("hide");
-    const closeButton = document.querySelector(".close-plugin-btn");
-    closeButton.addEventListener("click", () => {
-      triggerAppearance();
-      // condition of click on close when we are on success page
-      if (candidateInfoBlock.classList.contains("hide")) {
-        hideSuccess();
-      }
-    });
+    // const closeButton = document.querySelector(".close-plugin-btn");
+    // closeButton.addEventListener("click", () => {
+    //   triggerAppearance();
+    //   // condition of click on close when we are on success page
+    //   if (candidateInfoBlock.classList.contains("hide")) {
+    //     hideSuccess();
+    //   }
+    // });
   }
 
   const getCandidateInfo = (element = resumeContainer) => {
