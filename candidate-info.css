@@ -22,47 +22,31 @@
   outline: none;
 }
 
-.ats-destination-select {
-  width: 100%;
-  margin-bottom: 0 !important;
-  appearance: auto;
-}
-
-select {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  border: 1px solid rgba(104, 126, 136, 1);
-  height: auto;
-  border-radius: 5px;
-}
-
-select:focus {
-  padding: 10px;
-}
-
 .select-container {
   position: relative;
   margin-bottom: 20px !important;
 }
 
-option {
+.ats-destination-select {
+  width: 100%;
+  max-width: 100%;
+  appearance: auto;
+  font-size: 16px;
+  height: auto;
+  margin-bottom: 0 !important;
   padding: 10px;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-}
-
-option:hover {
-  background-color: #f2f5f8;
+  border: 1px solid rgba(104, 126, 136, 1);
+  border-radius: 5px;
 }
 
 option[value="separator"] {
   color: #999;
   font-style: italic;
   pointer-events: none;
-  position: relative;
-  right: 0;
+}
+
+option {
+  max-width: 100% !important;
 }
 
 .candidate-section-title {
