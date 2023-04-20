@@ -7,6 +7,7 @@
   let hasCandidateEmailError = false;
   let hasAtsDestinationError = false;
   let isInDataBase = false;
+  let isMain = false;
   // const PHONE_PATTERN =
   //   /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im;
   const EMAIL_PATTERN = /^[\w-]+[_.\-\w]*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
@@ -207,6 +208,7 @@
         token = utils.localstorageToken() ?? null;
         if (token) {
           const userInfo = utils.parseJwt(token);
+          isMain = userInfo.RoleId === "1";
           const userName = userInfo.CompanyName;
           const companyName = userInfo.UserName;
           const company = document.querySelector(".user-company");
@@ -320,7 +322,6 @@
         const link = document.querySelector(".ats-in-base-link");
         link.href = appearance.candidateInDatabaseUrl;
       }
-
       if (Array.isArray(appearance.projects)) {
         appearance.projects.forEach((item) => {
           const option = document.createElement("option");
@@ -331,7 +332,7 @@
           projectName.innerHTML = item.name;
           const projectAdditionalInfo = document.createElement("div");
           projectAdditionalInfo.innerHTML =
-            ", " + item.cityName + ", " + item.ownerName;
+            ", " + item.cityName + (isMain ? ", " + item.ownerName : "");
           optionInfo.classList.add("select-project-option-item");
           optionInfo.appendChild(projectName);
           optionInfo.appendChild(projectAdditionalInfo);
