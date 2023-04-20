@@ -84,10 +84,12 @@
       onPluginOpen();
     });
 
-    const closeOnEntranceButton = document.querySelector(".close-on-entrance-plugin-btn");
-    closeOnEntranceButton.addEventListener('click', () => {
+    const closeOnEntranceButton = document.querySelector(
+      ".close-on-entrance-plugin-btn"
+    );
+    closeOnEntranceButton.addEventListener("click", () => {
       triggerAppearance();
-    })
+    });
 
     const generalCloseButton = document.querySelector(".close-plugin-btn");
     generalCloseButton.addEventListener("click", () => {
@@ -97,6 +99,8 @@
         hideSuccess();
       }
     });
+
+    listenToClose();
   });
 
   function onPluginOpen() {
@@ -292,19 +296,6 @@
               document.querySelector(".candidate-info");
             successBlock.classList.remove("hide");
             candidateInfoBlock.classList.add("hide");
-            const closeBtn = document.querySelector(".close-on-success-btn");
-            closeBtn.addEventListener("click", async () => {
-              triggerAppearance();
-              hideSuccess();
-              if (!isInDataBase) {
-                const selectOptions = select.options;
-                for (let i = selectOptions.length - 1; i >= 3; i--) {
-                  selectOptions[i].remove();
-                }
-                await patchSelectWithProjects(select);
-              }
-            });
-            isInDataBase = true;
           } else {
             const errorOnAdding = document.querySelector("#errorOnAdding");
             errorOnAdding.classList.remove("hide");
@@ -349,6 +340,25 @@
         });
       }
     }
+  }
+
+  function listenToClose() {
+    const closeBtn = document.querySelector(".close-on-success-btn");
+    const select = document.querySelector(".ats-destination-select");
+    closeBtn.addEventListener("click", async () => {
+      console.log({ isInDataBase });
+      hideSuccess();
+      triggerAppearance();
+      if (!isInDataBase) {
+        console.log("in scenarion");
+        isInDataBase = true;
+        const selectOptions = select.options;
+        for (let i = selectOptions.length - 1; i >= 3; i--) {
+          selectOptions[i].remove();
+        }
+        await patchSelectWithProjects(select);
+      }
+    });
   }
 
   function onCandidateFound() {
