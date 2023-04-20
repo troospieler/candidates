@@ -1,6 +1,6 @@
 {
   "name": "Helper для кандидатів",
-  "version": "0.0.14",
+  "version": "0.0.4",
   "description": "Додавайте кандидатів до ats напряму з інтеграцій",
   "permissions": ["storage", "tabs", "scripting", "activeTab"],
   "host_permissions": [
