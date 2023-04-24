@@ -1,6 +1,6 @@
 {
   "name": "Helper для кандидатів",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Додавайте кандидатів до Helper напряму з інтеграцій",
   "permissions": ["storage", "tabs"],
   "host_permissions": [
