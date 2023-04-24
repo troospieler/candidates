@@ -80,7 +80,7 @@
 
     //listening for cta button click to show popup and implement logic
     const ctaBtn = document.querySelector(".cta-button");
-    ctaBtn.addEventListener("click", async () => {
+    ctaBtn.addEventListener("click", () => {
       triggerAppearance();
       onPluginOpen();
     });
@@ -288,11 +288,11 @@
             const nameContainer = document.querySelector(
               ".added-candidate-name"
             );
-            nameContainer.innerHTML = result.parsedResume.fullName;
+            nameContainer.innerHTML = result.parsedResume?.fullName;
             const goToCandidate = document.querySelector(
               ".go-to-candidate-link"
             );
-            goToCandidate.href = result.candidate.url;
+            goToCandidate.href = result.candidate?.url;
             const successBlock = document.querySelector(".add-success");
             const candidateInfoBlock =
               document.querySelector(".candidate-info");
