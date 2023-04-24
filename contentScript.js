@@ -20,13 +20,11 @@
   await fetch(chrome.runtime.getURL("popup.html"))
     .then((response) => response.text())
     .then((html) => {
-      console.log("LOADED PLUGIN HTML");
       const wrapper = document.createElement("div");
       wrapper.classList.add("plugin-window-wrapper");
       wrapper.innerHTML = html;
       document.body.appendChild(wrapper);
       //waiting for dom to bo loaded and then implement logic
-      console.log("DOM CONTENT LOADED");
       const tokenFromStorage = utils.localstorageToken();
       token = tokenFromStorage ?? null;
 
@@ -41,20 +39,16 @@
 
       // INITIALIZING VIEW ON PAGE START
       if (!token) {
-        console.log("SHOULD OPEN LOGIN WINDOW");
         entranceWindowBlock.classList.remove("hide");
       } else if (!currentCandidate) {
-        console.log("SHOULD OPEN LOADING WINDOW");
         fetchingStateBlock.classList.remove("hide");
       } else {
-        console.log("SHOULD OPEN CANDIDATE WINDOW");
         candidateInfoBlock.classList.remove("hide");
       }
 
       //listening for cta button click to show popup and implement logic
       const ctaBtn = document.querySelector(".cta-button");
       ctaBtn.addEventListener("click", () => {
-        console.log("CANDIDATE BTN CLICKED");
         triggerAppearance();
         onPluginOpen();
       });
@@ -106,60 +100,6 @@
       //if logout will be necessary use this message event
     }
   });
-
-  //waiting for dom to bo loaded and then implement logic
-  // document.addEventListener("DOMContentLoaded", () => {
-  //   console.log("DOM CONTENT LOADED");
-  //   const tokenFromStorage = utils.localstorageToken();
-  //   token = tokenFromStorage ?? null;
-
-  //   // get reference to all 4 states of plugin
-  //   const entranceWindowBlock = document.querySelector(".entrance-window");
-  //   const fetchingStateBlock = document.querySelector(".fetching-state");
-  //   const candidateInfoBlock = document.querySelector(".candidate-info");
-  //   const successBlock = document.querySelector(".add-success");
-
-  //   const firstPart = document.location.href.split("resumes/")[1];
-  //   currentResumeId = firstPart.slice(0, firstPart.indexOf("/"));
-
-  //   // INITIALIZING VIEW ON PAGE START
-  //   if (!token) {
-  //     console.log("SHOULD OPEN LOGIN WINDOW");
-  //     entranceWindowBlock.classList.remove("hide");
-  //   } else if (!currentCandidate) {
-  //     console.log("SHOULD OPEN LOADING WINDOW");
-  //     fetchingStateBlock.classList.remove("hide");
-  //   } else {
-  //     console.log("SHOULD OPEN CANDIDATE WINDOW");
-  //     candidateInfoBlock.classList.remove("hide");
-  //   }
-
-  //   //listening for cta button click to show popup and implement logic
-  //   const ctaBtn = document.querySelector(".cta-button");
-  //   ctaBtn.addEventListener("click", () => {
-  //     console.log("CANDIDATE BTN CLICKED");
-  //     triggerAppearance();
-  //     onPluginOpen();
-  //   });
-
-  //   const closeOnEntranceButton = document.querySelector(
-  //     ".close-on-entrance-plugin-btn"
-  //   );
-  //   closeOnEntranceButton.addEventListener("click", () => {
-  //     triggerAppearance();
-  //   });
-
-  //   const generalCloseButton = document.querySelector(".close-plugin-btn");
-  //   generalCloseButton.addEventListener("click", () => {
-  //     triggerAppearance();
-  //     // condition of click on close when we are on success page
-  //     if (!successBlock.classList.contains("hide")) {
-  //       hideSuccess();
-  //     }
-  //   });
-
-  //   listenToClose();
-  // });
 
   function onPluginOpen() {
     if (token) {
