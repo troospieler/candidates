@@ -91,7 +91,7 @@ export const login = async (url, input) => {
     const result = response.json();
     return result;
   } catch (error) {
-    console.log("error on login", error);
+    console.log("ERROR on LOGIN", error);
     return result;
   }
 };
@@ -117,7 +117,7 @@ export const addCandidate = async (input, env, token) => {
     const result = await response.json();
     return result;
   } catch (error) {
-    console.log("error on login", error);
+    console.log("ERROR on ADDING CANDIDATE", error);
     return error;
   }
 };
@@ -157,7 +157,7 @@ export async function getAtsAppearance(url, input) {
     const result = await response.json();
     return result;
   } catch (error) {
-    console.log("error on login", error);
+    console.log("ERROR on GETTING PROJECTS", error);
     return error;
   }
 }
