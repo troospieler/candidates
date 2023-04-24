@@ -56,7 +56,7 @@
   });
 
   //waiting for dom to bo loaded and then implement logic
-  document.addEventListener("DOMContentLoaded", async () => {
+  document.addEventListener("DOMContentLoaded", () => {
     const tokenFromStorage = utils.localstorageToken();
     token = tokenFromStorage ?? null;
 
