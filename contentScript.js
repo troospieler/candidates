@@ -57,6 +57,7 @@
 
   //waiting for dom to bo loaded and then implement logic
   document.addEventListener("DOMContentLoaded", () => {
+    console.log('DOM CONTENT LOADED')
     const tokenFromStorage = utils.localstorageToken();
     token = tokenFromStorage ?? null;
 
@@ -71,16 +72,20 @@
 
     // INITIALIZING VIEW ON PAGE START
     if (!token) {
+      console.log('SHOULD OPEN LOGIN WINDOW')
       entranceWindowBlock.classList.remove("hide");
     } else if (!currentCandidate) {
+      console.log('SHOULD OPEN LOADING WINDOW')
       fetchingStateBlock.classList.remove("hide");
     } else {
+      console.log('SHOULD OPEN CANDIDATE WINDOW')
       candidateInfoBlock.classList.remove("hide");
     }
 
     //listening for cta button click to show popup and implement logic
     const ctaBtn = document.querySelector(".cta-button");
     ctaBtn.addEventListener("click", () => {
+      console.log('CANDIDATE BTN CLICKED')
       triggerAppearance();
       onPluginOpen();
     });
