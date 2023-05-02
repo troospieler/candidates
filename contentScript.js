@@ -1,4 +1,14 @@
 (async () => {
+  const currentUrl = window.location.href;
+  const match = currentUrl.match(
+    /^https:\/\/www\.work\.ua(\/\w{0,})?\/resumes\/(\d+)\/?(?:\?.*)?$/
+  );
+
+  // prevent plugin open/functionality if not correct url
+  if (!match) {
+    return;
+  }
+
   let currentResumeId = "";
   let resumeContainer = null;
   let isResumeFound = false;
@@ -8,10 +18,15 @@
   let hasAtsDestinationError = false;
   let isInDataBase = false;
   let isMain = false;
+  let isPluginWindowOpen = false;
+  let isLoginBtnHasListeners = false;
+  let hasAtsAccess = true;
+  const port = chrome.runtime.connect({ name: "contentScript" });
+
   // const PHONE_PATTERN =
   //   /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im;
   const EMAIL_PATTERN = /^[\w-]+[_.\-\w]*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
-
+  
   // get access to utils methods
   const src = chrome.runtime.getURL("utils.js");
   const utils = await import(src);
@@ -19,50 +34,95 @@
   //injecting popup.html to current web page
   await fetch(chrome.runtime.getURL("popup.html"))
     .then((response) => response.text())
-    .then((html) => {
+    .then(async (html) => {
+      const manifest = chrome.runtime.getManifest();
+      console.log(
+        `%cHelper ${manifest.version}`,
+        "color: white; background-color: #ff5252; text-shadow: 0 0 15px rgba(25,255,25,.5), 0 0 10px rgba(255,255,255,.5); padding: 3px 9px; border-radius: 5px; font-family:monospace; font-size: 20px; font-weight: bold;"
+      );
       const wrapper = document.createElement("div");
       wrapper.classList.add("plugin-window-wrapper");
       wrapper.innerHTML = html;
       document.body.appendChild(wrapper);
-      //waiting for dom to bo loaded and then implement logic
-      const tokenFromStorage = utils.localstorageToken();
-      token = tokenFromStorage ?? null;
 
-      // get reference to all 4 states of plugin
+      // get reference to all 5 states of plugin
       const entranceWindowBlock = document.querySelector(".entrance-window");
       const fetchingStateBlock = document.querySelector(".fetching-state");
       const candidateInfoBlock = document.querySelector(".candidate-info");
       const successBlock = document.querySelector(".add-success");
+      const noAccessBlock = document.querySelector(".no-ats-access");
+
+      // !!!!CHECEK IF THiS ASYNC STATENMENT IS NOT BREAKUNG ANY THING!!!!
+      chrome.runtime.onMessage.addListener(async (message) => {
+        const { type } = message;
+        if (type === "TOKEN_INFO") {
+          // prepeare view before opening plugin window based on token in cookies
+          entranceWindowBlock.classList.add("hide");
+          fetchingStateBlock.classList.add("hide");
+          candidateInfoBlock.classList.add("hide");
+          noAccessBlock.classList.add("hide");
+          token = message.jwtToken ? "Bearer " + message.jwtToken : null;
+
+          if (!token) {
+            triggerUserInfoBlockAppearance(false);
+            entranceWindowBlock.classList.remove("hide");
+          } else {
+            //ADD CHECK FOR SEEKER IN TOKEN HERE
+
+            hasAtsAccess = await utils.checkAccess(
+              token,
+              utils.getEnvQueryParam(document.location.href)
+            );
+            if (!hasAtsAccess) {
+              triggerUserInfoBlockAppearance(true);
+              noAccessBlock.classList.remove("hide");
+            } else if (!currentCandidate) {
+              triggerUserInfoBlockAppearance(true);
+              fetchingStateBlock.classList.remove("hide");
+            } else {
+              console.log("SHOW INFO");
+              triggerUserInfoBlockAppearance(true);
+              candidateInfoBlock.classList.remove("hide");
+            }
+          }
+
+          port.postMessage({
+            type: "VIEW_READY",
+          });
+        }
+        if (type === "TRIGGER_PLUGIN") {
+          triggerAppearance();
+          onPluginOpen();
+        }
+        if (type === "ICON_CLICKED") {
+          proceedPLuginTriggered();
+        }
+        // USING FOR LOGGING DATA FROM BACKGROUND CONTEXT
+        if (type === "LOGGING_DATA_TO_CONSOLE") {
+          console.log(message);
+        }
+      });
 
       const firstPart = document.location.href.split("resumes/")[1];
       currentResumeId = firstPart.slice(0, firstPart.indexOf("/"));
 
-      // INITIALIZING VIEW ON PAGE START
-      if (!token) {
-        entranceWindowBlock.classList.remove("hide");
-      } else if (!currentCandidate) {
-        fetchingStateBlock.classList.remove("hide");
-      } else {
-        candidateInfoBlock.classList.remove("hide");
-      }
-
       //listening for cta button click to show popup and implement logic
       const ctaBtn = document.querySelector(".cta-button");
       ctaBtn.addEventListener("click", () => {
-        triggerAppearance();
-        onPluginOpen();
+        proceedPLuginTriggered();
       });
 
       const closeOnEntranceButton = document.querySelector(
         ".close-on-entrance-plugin-btn"
       );
       closeOnEntranceButton.addEventListener("click", () => {
-        triggerAppearance();
+        proceedPLuginTriggered();
       });
 
       const generalCloseButton = document.querySelector(".close-plugin-btn");
       generalCloseButton.addEventListener("click", () => {
-        triggerAppearance();
+        proceedPLuginTriggered();
+
         // condition of click on close when we are on success page
         if (!successBlock.classList.contains("hide")) {
           hideSuccess();
@@ -75,6 +135,7 @@
 
   // changing view ==> hide cta and show plugin / show cta and hide plugin
   const triggerAppearance = () => {
+    isPluginWindowOpen = !isPluginWindowOpen;
     const ctaBtn = document.querySelector(".cta-button");
     const pluginWindow = document.querySelector(".plugin-window");
 
@@ -89,61 +150,52 @@
     successBlock.classList.add("hide");
   };
 
-  // listening for events to trigger actions
-  chrome.runtime.onMessage.addListener((message) => {
-    const { type } = message;
-    if (type === "ICON_CLICKED") {
-      triggerAppearance();
-      onPluginOpen();
-    }
-    if (type === "LOGOUT") {
-      //if logout will be necessary use this message event
-    }
-  });
+  function proceedPLuginTriggered() {
+    console.log({ isPluginWindowOpen });
+    const env = utils.getEnvQueryParam(document.location.href);
+    !isPluginWindowOpen
+      ? port.postMessage({
+          type: "GET_JWT_TOKEN",
+          env,
+        })
+      : triggerAppearance();
+  }
 
   function onPluginOpen() {
     if (token) {
       prefillCandidateForm(currentResumeId);
     } else {
-      const loginForm = document.querySelector("#loginForm");
-      loginForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-
-        loginForm.classList.add("processing");
-        const credentialsError = document.querySelector(".invalid-creds");
-        credentialsError.classList.add("hide");
-        const input = utils.getFormValue(loginForm);
-        const loginResponse = await utils.login(document.location.href, input);
-        const token =
-          loginResponse?.data?.login?.loginResult?.bearerToken ?? null;
-        if (token) {
-          const tokenValueForStorage = `Bearer ${token}`;
-          localStorage.setItem("atsToken", tokenValueForStorage);
-          const entranceWindowBlock =
-            document.querySelector(".entrance-window");
-          entranceWindowBlock.classList.add("hide");
-          const fetchingStateBlock = document.querySelector(".fetching-state");
-          fetchingStateBlock.classList.remove("hide");
-          prefillCandidateForm(currentResumeId);
-        } else {
-          const errors = loginResponse?.data?.login?.errors ?? [];
-          if (
-            errors.length &&
-            errors.find(
-              (errorItem) =>
-                errorItem.__typename === "CredentialsAreInvalidError"
-            )
-          ) {
-            credentialsError.classList.remove("hide");
-          }
-        }
-
-        loginForm.classList.remove("processing");
-      });
+      const loginBtn = document.querySelector(".login-btn");
+      if (!isLoginBtnHasListeners) {
+        isLoginBtnHasListeners = true;
+        loginBtn.addEventListener("click", () => {
+          const env = utils.getEnvQueryParam(document.location.href);
+          window.open(
+            `https://helper.${env ? env + "." : ""}${utils.DOMAIN}/login`
+          );
+          triggerAppearance();
+        });
+      }
     }
   }
 
   async function prefillCandidateForm(resumeId) {
+    if (token) {
+      const userInfo = utils.parseJwt(token);
+      isMain = userInfo.RoleId === "1";
+      const userName = userInfo.CompanyName;
+      const companyName = userInfo.UserName;
+      const company = document.querySelector(".user-company");
+      company.innerText = companyName + ", ";
+      const user = document.querySelector(".user-name");
+      user.innerText = userName;
+      triggerUserInfoBlockAppearance(true);
+    }
+
+    if (!hasAtsAccess) {
+      return;
+    }
+
     if (!currentCandidate) {
       resumeContainer = await utils.getWorkResumeContainer(resumeId);
       const resume = getCandidateInfo(resumeContainer);
@@ -200,20 +252,6 @@
             }
             currentCandidate.emails = [emailValue];
           }
-        }
-
-        token = utils.localstorageToken() ?? null;
-        if (token) {
-          const userInfo = utils.parseJwt(token);
-          isMain = userInfo.RoleId === "1";
-          const userName = userInfo.CompanyName;
-          const companyName = userInfo.UserName;
-          const company = document.querySelector(".user-company");
-          company.innerText = companyName + ", ";
-          const user = document.querySelector(".user-name");
-          user.innerText = userName;
-          const info = document.querySelector(".ats-user-info");
-          info.classList.remove("hide");
         }
 
         const select = document.querySelector(".ats-destination-select");
@@ -281,7 +319,17 @@
             token
           );
 
-          if (result && !result.errors) {
+          if (!result?.ok && result?.status === 403) {
+            hasAtsAccess = false;
+            const candidateInfoBlock =
+              document.querySelector(".candidate-info");
+            const noAccessBlock = document.querySelector(".no-ats-access");
+            candidateInfoBlock.classList.add("hide");
+            noAccessBlock.classList.remove("hide");
+            return;
+          }
+
+          if (!!result && result instanceof Object) {
             const nameContainer = document.querySelector(
               ".added-candidate-name"
             );
@@ -312,7 +360,7 @@
       phones: currentCandidate.phones,
       emails: currentCandidate.emails,
     });
-    if (appearance) {
+    if (appearance instanceof Object && !!appearance && !!appearance.projects) {
       if (appearance.isExistsInCandidatesDatabase) {
         const inBase = document.querySelector(".already-in-base-notification");
         inBase.classList.remove("hide");
@@ -355,6 +403,11 @@
         await patchSelectWithProjects(select);
       }
     });
+  }
+
+  function triggerUserInfoBlockAppearance(shouldOpen) {
+    const info = document.querySelector(".ats-user-info");
+    shouldOpen ? info.classList.remove("hide") : info.classList.add("hide");
   }
 
   function onCandidateFound() {

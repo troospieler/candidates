@@ -1,14 +1,15 @@
 {
   "name": "Helper для кандидатів",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Додавайте кандидатів до Helper напряму з інтеграцій",
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "tabs", "cookies"],
   "host_permissions": [
-    "https://www.work.ua/resumes/*",
-    "https://ats-api.dev.rabota.ua/resume/import"
+    "https://www.work.ua/*",
+    "https://*.rabota.ua/*",
+    "https://*.robota.ua/*"
   ],
   "externally_connectable": {
-    "matches": ["https://www.work.ua/resumes/*", "https://rabota.ua/*"],
+    "matches": ["https://www.work.ua/*resumes/*"],
     "js": ["contentScript.js"]
   },
   "background": {
@@ -16,7 +17,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.work.ua/resumes/*"],
+      "matches": ["https://www.work.ua/*resumes/*"],
       "js": ["contentScript.js"],
       "css": [
         "popup.css",

@@ -2,6 +2,8 @@
 // consider moving getTab() logic to popup.js
 // and maybe move getAllTabs() logic to popup.js too
 
+export const DOMAIN = "robota.ua";
+
 export async function getTab() {
   let queryOptions = { active: true, currentWindow: true };
   let [tab] = await chrome.tabs.query(queryOptions);
@@ -10,7 +12,7 @@ export async function getTab() {
 
 export async function getAllTabs() {
   let tabs = await chrome.tabs.query({
-    url: ["https://www.work.ua/resumes/*", "https://rabota.ua/*"],
+    url: ["https://www.work.ua/resumes/*", `https://${DOMAIN}/*`],
   });
   return tabs;
 }
@@ -42,59 +44,162 @@ export function localstorageToken() {
   }
 }
 
-export const login = async (url, input) => {
-  const env = getEnvQueryParam(url);
+//DELETE LOGIN
+// export const login = async (url, input) => {
+//   const env = getEnvQueryParam(url);
+//   const myHeaders = new Headers();
+//   myHeaders.append("Content-Type", "application/json");
+
+//   const raw = JSON.stringify({
+//     operationName: "login",
+//     variables: {
+//       input,
+//     },
+//     query: `
+//       mutation login($input: LoginInput!) {
+//         login(input: $input) {
+//           loginResult {
+//             bearerToken
+//           }
+//           errors {
+//             ... on CompanyHasNoAccessToAtsError {
+//               message
+//               __typename
+//             }
+//             ... on CredentialsAreInvalidError {
+//               message
+//               __typename
+//             }
+//             ... on UserHasNoAccessToAtsError {
+//               message
+//               __typename
+//             }
+//           }
+//         }
+//       }`,
+//   });
+
+//   const requestOptions = {
+//     method: "POST",
+//     headers: myHeaders,
+//     body: raw,
+//     redirect: "follow",
+//   };
+
+//   try {
+//     const response = await fetch(
+//       `https://ats-api${env ? "." + env : ""}.rabota.ua/graphql/`,
+//       requestOptions
+//     );
+//     const result = response.json();
+//     return result;
+//   } catch (error) {
+//     console.log("ERROR on LOGIN", error);
+//     return result;
+//   }
+// };
+
+export const checkAccess = async (token,env) => {
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
-
-  const raw = JSON.stringify({
-    operationName: "login",
-    variables: {
-      input,
-    },
+  myHeaders.append("Authorization", token);
+  var graphql = JSON.stringify({
     query: `
-      mutation login($input: LoginInput!) {
-        login(input: $input) {
-          loginResult {
-            bearerToken
-          }
-          errors {
-            ... on CompanyHasNoAccessToAtsError {
-              message
-              __typename
-            }
-            ... on CredentialsAreInvalidError {
-              message
-              __typename
-            }
-            ... on UserHasNoAccessToAtsError {
-              message
-              __typename
-            }
-          }
+    mutation checkAccess {
+      validateCurrentUser {
+        user {
+          id
+          __typename
         }
-      }`,
+        errors {
+          ... on CompanyHasNoAccessToAtsError {
+            message
+            __typename
+          }
+          ... on UserHasNoAccessToAtsError {
+            message
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+    }`,
   });
 
-  const requestOptions = {
-    method: "POST",
+  var requestOptions = {
+    method: 'POST',
     headers: myHeaders,
-    body: raw,
-    redirect: "follow",
+    body: graphql,
+    redirect: 'follow'
   };
 
   try {
     const response = await fetch(
-      `https://ats-api${env ? "." + env : ""}.rabota.ua/graphql/`,
+      `https://ats-api${env ? "." + env : ""}.${DOMAIN}/graphql/`,
       requestOptions
     );
-    const result = response.json();
-    return result;
+    if (response.ok) {
+      const result = await response.json();
+      return !!result?.data?.validateCurrentUser?.user && !result?.data?.validateCurrentUser?.errors;
+    } else {
+      if (response.status === 403) {
+        return false;
+      } else {
+        return null;
+      }
+    }
   } catch (error) {
-    console.log("ERROR on LOGIN", error);
-    return result;
+    console.log("ERROR on CHECK ACCESS", error);
+    return error;
   }
 };
+
+// export const refreshToken = async (url) => {
+//   const env = getEnvQueryParam(url);
+//   var myHeaders = new Headers();
+//   myHeaders.append("Content-Type", "application/json");
+
+//   var graphql = JSON.stringify({
+//     query: `
+//       mutation refresh {
+//         refresh {
+//           refreshResult {
+//             bearerToken
+//             hasForwardedSetCookieHeader
+//             __typename
+//           }
+//           errors {
+//             ... on TokenCanNotBeRefreshedError {
+//               message
+//               __typename
+//             }
+//             __typename
+//           }
+//           __typename
+//         }
+//       }`,
+//     // variables: {},
+//   });
+//   var requestOptions = {
+//     method: "POST",
+//     headers: myHeaders,
+//     body: graphql,
+//     redirect: "follow",
+//   };
+
+//   try {
+//     const response = await fetch(
+//       `https://ats-api${env ? "." + env : ""}.rabota.ua/graphql/`,
+//       requestOptions
+//     );
+//     const result = response.json();
+//     return result;
+//   } catch (error) {
+//     console.log("ERROR on REFRESH TOKEN", error);
+//     return result;
+//   }
+// };
 
 export const addCandidate = async (input, env, token) => {
   const myHeaders = new Headers();
@@ -111,11 +216,19 @@ export const addCandidate = async (input, env, token) => {
   };
   try {
     const response = await fetch(
-      `https://ats-api${env ? "." + env : ""}.rabota.ua/resume/import`,
+      `https://ats-api${env ? "." + env : ""}.${DOMAIN}/resume/import`,
       requestOptions
     );
-    const result = await response.json();
-    return result;
+    if (response.ok) {
+      const result = await response.json();
+      return result;
+    } else {
+      if (response.status === 403) {
+        return response;
+      } else {
+        return null;
+      }
+    }
   } catch (error) {
     console.log("ERROR on ADDING CANDIDATE", error);
     return error;
@@ -151,14 +264,16 @@ export async function getAtsAppearance(url, input) {
     const response = await fetch(
       `https://ats-api${
         env ? "." + env : ""
-      }.rabota.ua/candidate/connections/${query}`,
+      }.${DOMAIN}/candidate/connections/${query}`,
       requestOptions
     );
-    const result = await response.json();
-    return result;
+    if (response.ok) {
+      const result = await response.json();
+      return result;
+    }
   } catch (error) {
     console.log("ERROR on GETTING PROJECTS", error);
-    return error;
+    return null;
   }
 }
 
@@ -178,7 +293,7 @@ export function parseJwt(userToken) {
       })
       .join("")
   );
-
+  console.log(JSON.parse(jsonPayload));
   return JSON.parse(jsonPayload);
 }
 
