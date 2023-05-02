@@ -149,14 +149,24 @@
   display: none;
 }
 
-.yellow-circle {
-  position: absolute;
-  left: 50%;
-  bottom: 200px;
-  width: 400px;
-  height: 400px;
-  border-radius: 50%;
-  background-color: #ffe886;
-  transform: translateX(-50%);
-  z-index: 0;
+.fetching-btn-state {
+  animation: scale 2s linear infinite;
+}
+
+@keyframes scale {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(0.95);
+  }
+  50% {
+    transform: scale(1);
+  }
+  75% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }

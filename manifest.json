@@ -24,7 +24,8 @@
         "entrance.css",
         "fetching-state.css",
         "candidate-info.css",
-        "success-window.css"
+        "success-window.css",
+        "no-ats-access.css"
       ],
       "run_at": "document_start",
       "match_about_blank": true

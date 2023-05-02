@@ -19,14 +19,13 @@
   let isInDataBase = false;
   let isMain = false;
   let isPluginWindowOpen = false;
-  let isLoginBtnHasListeners = false;
   let hasAtsAccess = true;
   const port = chrome.runtime.connect({ name: "contentScript" });
 
   // const PHONE_PATTERN =
   //   /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im;
   const EMAIL_PATTERN = /^[\w-]+[_.\-\w]*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
-  
+
   // get access to utils methods
   const src = chrome.runtime.getURL("utils.js");
   const utils = await import(src);
@@ -52,35 +51,50 @@
       const successBlock = document.querySelector(".add-success");
       const noAccessBlock = document.querySelector(".no-ats-access");
 
-      // !!!!CHECEK IF THiS ASYNC STATENMENT IS NOT BREAKUNG ANY THING!!!!
+      //listen to loginBtn on init
+      const loginBtn = document.querySelector(".login-btn");
+      loginBtn.addEventListener("click", () => {
+        const env = utils.getEnvQueryParam(document.location.href);
+        window.open(
+          `https://helper.${env ? env + "." : ""}${utils.DOMAIN}/login`
+        );
+        triggerAppearance();
+      });
+
       chrome.runtime.onMessage.addListener(async (message) => {
         const { type } = message;
+        // TOKEN_INFO -- listening for token info appearance in cookie storage
         if (type === "TOKEN_INFO") {
+          // adding some animation for loading time before hiding cta-btn
+          const ctaBtn = document.querySelector(".cta-button");
+          ctaBtn.classList.add("fetching-btn-state");
+
           // prepeare view before opening plugin window based on token in cookies
           entranceWindowBlock.classList.add("hide");
           fetchingStateBlock.classList.add("hide");
           candidateInfoBlock.classList.add("hide");
           noAccessBlock.classList.add("hide");
           token = message.jwtToken ? "Bearer " + message.jwtToken : null;
-
+          const isEmployer = token
+            ? utils.parseJwt(token)?.IsEmployer === "1"
+            : false;
           if (!token) {
             triggerUserInfoBlockAppearance(false);
             entranceWindowBlock.classList.remove("hide");
           } else {
-            //ADD CHECK FOR SEEKER IN TOKEN HERE
-
             hasAtsAccess = await utils.checkAccess(
               token,
               utils.getEnvQueryParam(document.location.href)
             );
             if (!hasAtsAccess) {
-              triggerUserInfoBlockAppearance(true);
-              noAccessBlock.classList.remove("hide");
+              triggerUserInfoBlockAppearance(isEmployer);
+              isEmployer
+                ? noAccessBlock.classList.remove("hide")
+                : entranceWindowBlock.classList.remove("hide");
             } else if (!currentCandidate) {
               triggerUserInfoBlockAppearance(true);
               fetchingStateBlock.classList.remove("hide");
             } else {
-              console.log("SHOW INFO");
               triggerUserInfoBlockAppearance(true);
               candidateInfoBlock.classList.remove("hide");
             }
@@ -92,7 +106,7 @@
         }
         if (type === "TRIGGER_PLUGIN") {
           triggerAppearance();
-          onPluginOpen();
+          prefillCandidateForm(currentResumeId);
         }
         if (type === "ICON_CLICKED") {
           proceedPLuginTriggered();
@@ -103,8 +117,8 @@
         }
       });
 
-      const firstPart = document.location.href.split("resumes/")[1];
-      currentResumeId = firstPart.slice(0, firstPart.indexOf("/"));
+      const firstPartOfUrl = document.location.href.split("resumes/")[1];
+      currentResumeId = firstPartOfUrl.slice(0, firstPartOfUrl.indexOf("/"));
 
       //listening for cta button click to show popup and implement logic
       const ctaBtn = document.querySelector(".cta-button");
@@ -141,6 +155,10 @@
 
     ctaBtn.classList.toggle("hide");
     pluginWindow.classList.toggle("hide");
+    // delete animation from cta button on plugin window open
+    if (!isPluginWindowOpen) {
+      ctaBtn.classList.remove("fetching-btn-state");
+    }
   };
 
   const hideSuccess = () => {
@@ -151,7 +169,6 @@
   };
 
   function proceedPLuginTriggered() {
-    console.log({ isPluginWindowOpen });
     const env = utils.getEnvQueryParam(document.location.href);
     !isPluginWindowOpen
       ? port.postMessage({
@@ -159,24 +176,6 @@
           env,
         })
       : triggerAppearance();
-  }
-
-  function onPluginOpen() {
-    if (token) {
-      prefillCandidateForm(currentResumeId);
-    } else {
-      const loginBtn = document.querySelector(".login-btn");
-      if (!isLoginBtnHasListeners) {
-        isLoginBtnHasListeners = true;
-        loginBtn.addEventListener("click", () => {
-          const env = utils.getEnvQueryParam(document.location.href);
-          window.open(
-            `https://helper.${env ? env + "." : ""}${utils.DOMAIN}/login`
-          );
-          triggerAppearance();
-        });
-      }
-    }
   }
 
   async function prefillCandidateForm(resumeId) {
@@ -189,12 +188,13 @@
       company.innerText = companyName + ", ";
       const user = document.querySelector(".user-name");
       user.innerText = userName;
-      triggerUserInfoBlockAppearance(true);
     }
 
-    if (!hasAtsAccess) {
+    if (!hasAtsAccess || !token) {
       return;
     }
+    // CHECK IF NEEDED
+    triggerUserInfoBlockAppearance(!!token);
 
     if (!currentCandidate) {
       resumeContainer = await utils.getWorkResumeContainer(resumeId);
@@ -406,6 +406,7 @@
   }
 
   function triggerUserInfoBlockAppearance(shouldOpen) {
+    console.log({ shouldOpen });
     const info = document.querySelector(".ats-user-info");
     shouldOpen ? info.classList.remove("hide") : info.classList.add("hide");
   }
