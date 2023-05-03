@@ -279,7 +279,6 @@
         candidateForm.addEventListener("submit", async (event) => {
           event.preventDefault();
           sendSubmitRequestMessage();
-          // await sumbitCandidate();
         });
         onCandidateFound();
       }
