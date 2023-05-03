@@ -109,6 +109,17 @@ option {
   line-height: 20px;
 }
 
+.ats-in-base-link img {
+  display: inline-block;
+  position: relative;
+  transition: all 0.2s ease-in-out;
+  width: 15px;
+}
+
+.ats-in-base-link:hover img {
+  width: 18px;
+}
+
 .add-contacts-for-candidate-exclamation {
   display: inline-block;
   transform: rotate(180deg);

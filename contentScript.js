@@ -305,10 +305,8 @@
     hasCandidateEmailError = false;
     hasCandidatePhoneError = false;
 
-    // const obligatoryEmail = document.querySelector("#obligatoryEmail");
     const incorrectEmail = document.querySelector("#incorrectEmail");
     const incorrectPhone = document.querySelector("#incorrectPhone");
-
     const formValue = utils.getFormValue(candidateForm);
 
     // checking validity
@@ -464,7 +462,6 @@
   }
 
   function triggerUserInfoBlockAppearance(shouldOpen) {
-    console.log({ shouldOpen });
     const info = document.querySelector(".ats-user-info");
     shouldOpen ? info.classList.remove("hide") : info.classList.add("hide");
   }
