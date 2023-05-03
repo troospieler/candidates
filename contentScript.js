@@ -78,7 +78,7 @@
           entranceWindowBlock.classList.add("hide");
           fetchingStateBlock.classList.add("hide");
           candidateInfoBlock.classList.add("hide");
-          token = message.jwtToken ? "Bearer " + message.jwtToken : null;
+          setToken(message);
           if (!token) {
             triggerUserInfoBlockAppearance(false);
             entranceWindowBlock.classList.remove("hide");
@@ -113,6 +113,11 @@
             hideSuccess();
           }
           proceedPLuginTriggered();
+        }
+
+        if (type === "READY_TO_SUBMIT") {
+          setToken(message);
+          await sumbitCandidate();
         }
         // USING FOR LOGGING DATA FROM BACKGROUND CONTEXT
         if (type === "LOGGING_DATA_TO_CONSOLE") {
@@ -220,14 +225,10 @@
         }
 
         const contacts = resume?.children?.find(
-          (el) =>
-            el.text.toLowerCase().includes("телефон") ||
-            el.text.toLowerCase().includes("пошта")
+          (el) => phonesInResume(el) || emailsInResume(el)
         )?.children;
         if (contacts) {
-          const phone = contacts.find((el) =>
-            el.text.toLowerCase().includes("телефон")
-          );
+          const phone = contacts.find((el) => phonesInResume(el));
           if (phone) {
             const indexOfPhone = contacts.indexOf(phone);
             const phoneNumber =
@@ -240,9 +241,7 @@
             }
             currentCandidate.phones = [phoneNumber];
           }
-          const email = contacts.find((el) =>
-            el.text.toLowerCase().includes("пошта")
-          );
+          const email = contacts.find((el) => emailsInResume(el));
           if (email) {
             const indexOfEmail = contacts.indexOf(email);
             const emailValue =
@@ -261,9 +260,11 @@
           (!currentCandidate.phones || !currentCandidate.phones.length) &&
           (!currentCandidate.emails || !currentCandidate.emails.length)
         ) {
-          const noContactsWarning = document.querySelector(".no-contacts-on-page")
-          noContactsWarning.classList.remove('hide')
-          highlightInput()
+          const noContactsWarning = document.querySelector(
+            ".no-contacts-on-page"
+          );
+          noContactsWarning.classList.remove("hide");
+          highlightInput();
         }
 
         const select = document.querySelector(".ats-destination-select");
@@ -277,19 +278,29 @@
         const candidateForm = document.querySelector(".candidate-form");
         candidateForm.addEventListener("submit", async (event) => {
           event.preventDefault();
-          await sumbitCandidate();
+          sendSubmitRequestMessage();
+          // await sumbitCandidate();
         });
         onCandidateFound();
       }
     }
   }
 
+  function sendSubmitRequestMessage() {
+    const env = utils.getEnvQueryParam(document.location.href);
+    // sending message to catch it in background.js
+    port.postMessage({
+      type: "SUBMIT_REQUEST",
+      env,
+    });
+  }
+
   async function sumbitCandidate() {
     const notPicked = document.querySelector("#destinationNotPicked");
     const candidateForm = document.querySelector(".candidate-form");
-    const noContactsWarning = document.querySelector(".no-contacts-on-page") 
+    const noContactsWarning = document.querySelector(".no-contacts-on-page");
 
-    hasNoContactsError = false
+    hasNoContactsError = false;
     hasAtsDestinationError = false;
     hasCandidateEmailError = false;
     hasCandidatePhoneError = false;
@@ -307,17 +318,23 @@
     }
 
     if (!formValue["candidate-phones"] && !formValue["candidate-emails"]) {
-      hasNoContactsError = true
-      noContactsWarning.classList.remove('hide')
-      highlightInput()
+      hasNoContactsError = true;
+      noContactsWarning.classList.remove("hide");
+      highlightInput();
     }
 
-    if(!!formValue["candidate-emails"] && !EMAIL_PATTERN.test(formValue["candidate-emails"])) {
+    if (
+      !!formValue["candidate-emails"] &&
+      !EMAIL_PATTERN.test(formValue["candidate-emails"])
+    ) {
       hasCandidateEmailError = true;
       incorrectEmail.classList.remove("hide");
     }
 
-    if(!!formValue["candidate-phones"] && !PHONE_PATTERN.test(cleanedUpPhoneValue(formValue["candidate-phones"]))) {
+    if (
+      !!formValue["candidate-phones"] &&
+      !PHONE_PATTERN.test(cleanedUpPhoneValue(formValue["candidate-phones"]))
+    ) {
       hasCandidatePhoneError = true;
       incorrectPhone.classList.remove("hide");
     }
@@ -326,12 +343,12 @@
       incorrectEmail.classList.add("hide");
     }
 
-    if(!hasCandidatePhoneError) {
+    if (!hasCandidatePhoneError) {
       incorrectPhone.classList.add("hide");
     }
 
-    if(!hasNoContactsError) {
-      noContactsWarning.classList.add('hide')
+    if (!hasNoContactsError) {
+      noContactsWarning.classList.add("hide");
     }
 
     if (
@@ -367,7 +384,7 @@
       token
     );
 
-    if (!result?.ok && result?.status === 403) {
+    if (!result?.ok && (result?.status === 403 || result?.status === 401)) {
       hasAtsAccess = false;
       const candidateInfoBlock = document.querySelector(".candidate-info");
       const entranceWindowBlock = document.querySelector(".entrance-window");
@@ -375,6 +392,7 @@
       triggerUserInfoBlockAppearance(false);
       candidateInfoBlock.classList.add("hide");
       entranceWindowBlock.classList.remove("hide");
+      cta.classList.remove("processing");
       return;
     }
 
@@ -459,24 +477,42 @@
   }
 
   function highlightInput() {
-    const email = document.querySelector('#candidateInfoEmail')
-    const phone = document.querySelector('#candidateInfoPhone')
-    email.classList.add('highlighting-input')
-    phone.classList.add('highlighting-input')
-    email.addEventListener('animationend', (e) => {
-      if(e.animationName==='highlighting') {
-        email.classList.remove('highlighting-input')
+    const email = document.querySelector("#candidateInfoEmail");
+    const phone = document.querySelector("#candidateInfoPhone");
+    email.classList.add("highlighting-input");
+    phone.classList.add("highlighting-input");
+    email.addEventListener("animationend", (e) => {
+      if (e.animationName === "highlighting") {
+        email.classList.remove("highlighting-input");
       }
-    })
-    phone.addEventListener('animationend', (e) => {
-      if(e.animationName==='highlighting') {
-        phone.classList.remove('highlighting-input')
+    });
+    phone.addEventListener("animationend", (e) => {
+      if (e.animationName === "highlighting") {
+        phone.classList.remove("highlighting-input");
       }
-    })
+    });
+  }
+
+  function setToken(message) {
+    token = message.jwtToken ? "Bearer " + message.jwtToken : null;
   }
 
   function cleanedUpPhoneValue(input) {
-    return input.replace(/[\(\)\+\s-]/gm, '')
+    return input.replace(/[\(\)\+\s-]/gm, "");
+  }
+
+  function phonesInResume(el) {
+    const phonePossibleWordOptions = ["телефон", "phone"];
+    return phonePossibleWordOptions.find((word) =>
+      el.text.toLowerCase().includes(word)
+    );
+  }
+
+  function emailsInResume(el) {
+    const emailPossibleWordOptions = ["пошта", "почта", "email"];
+    return emailPossibleWordOptions.find((word) =>
+      el.text.toLowerCase().includes(word)
+    );
   }
 
   const getCandidateInfo = (element = resumeContainer) => {

@@ -28,7 +28,7 @@ export function getEnvQueryParam(url) {
   );
 }
 
-export const checkAccess = async (token,env) => {
+export const checkAccess = async (token, env) => {
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
   myHeaders.append("Authorization", token);
@@ -57,10 +57,10 @@ export const checkAccess = async (token,env) => {
   });
 
   var requestOptions = {
-    method: 'POST',
+    method: "POST",
     headers: myHeaders,
     body: graphql,
-    redirect: 'follow'
+    redirect: "follow",
   };
 
   try {
@@ -70,7 +70,10 @@ export const checkAccess = async (token,env) => {
     );
     if (response.ok) {
       const result = await response.json();
-      return !!result?.data?.validateCurrentUser?.user && !result?.data?.validateCurrentUser?.errors;
+      return (
+        !!result?.data?.validateCurrentUser?.user &&
+        !result?.data?.validateCurrentUser?.errors
+      );
     } else {
       if (response.status === 403) {
         return false;
@@ -106,7 +109,7 @@ export const addCandidate = async (input, env, token) => {
       const result = await response.json();
       return result;
     } else {
-      if (response.status === 403) {
+      if (response.status === 403 || response.status === 401) {
         return response;
       } else {
         return null;

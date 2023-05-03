@@ -1,5 +1,5 @@
-const OLD_DOMAIN = 'rabota.ua'
-const NEW_DOMAIN = 'robota.ua'
+const NEW_DOMAIN = "robota.ua";
+const OLD_DOMAIN = "rabota.ua";
 
 chrome.action.onClicked.addListener(async (tab) => {
   chrome.tabs.sendMessage(tab.id, { type: "ICON_CLICKED" });
@@ -12,24 +12,7 @@ chrome.runtime.onConnect.addListener((port) => {
     let [tab] = await chrome.tabs.query(queryOptions);
 
     if (message.type === "GET_JWT_TOKEN") {
-      const cookieSettingsByNewDomain = {
-        url: `https://${env ? env + "." : ""}${NEW_DOMAIN}`,
-        name: "jwt-token",
-      };
-      const cookieSettingsByOldDomain = {
-        url: `https://${env ? env + "." : ""}${OLD_DOMAIN}`,
-        name: "jwt-token",
-      };
-      chrome.cookies.get(cookieSettingsByNewDomain, (newDomainCookie) => {
-        if (!newDomainCookie) {
-          chrome.cookies.get(cookieSettingsByOldDomain, (oldDomainCookie) => {
-            sendLoggingDataMessageToTab(tab.id,oldDomainCookie)
-            sendCookieMessageToTab(tab.id, oldDomainCookie, env);
-          });
-        } else {
-          sendCookieMessageToTab(tab.id, newDomainCookie, env);
-        }
-      });
+      proceedActionWithCookie(tab.id, env, "retrieve");
     }
 
     if (message.type === "VIEW_READY") {
@@ -37,8 +20,33 @@ chrome.runtime.onConnect.addListener((port) => {
         type: "TRIGGER_PLUGIN",
       });
     }
+
+    if (message.type === "SUBMIT_REQUEST") {
+      proceedActionWithCookie(tab.id, env, "refresh");
+    }
   });
 });
+
+function proceedActionWithCookie(id, env, actionType) {
+  const cookieSettingsByNewDomain = {
+    url: `https://${env ? env + "." : ""}${NEW_DOMAIN}`,
+    name: "jwt-token",
+  };
+  const cookieSettingsByOldDomain = {
+    url: `https://${env ? env + "." : ""}${OLD_DOMAIN}`,
+    name: "jwt-token",
+  };
+  chrome.cookies.get(cookieSettingsByNewDomain, (newDomainCookie) => {
+    if (!newDomainCookie) {
+      chrome.cookies.get(cookieSettingsByOldDomain, (oldDomainCookie) => {
+        sendLoggingDataMessageToTab(id, oldDomainCookie);
+        sendCookieMessageToTab(id, oldDomainCookie, env, actionType);
+      });
+    } else {
+      sendCookieMessageToTab(id, newDomainCookie, env, actionType);
+    }
+  });
+}
 
 function isCookieApplicable(env, domain) {
   if (!domain) {
@@ -49,13 +57,22 @@ function isCookieApplicable(env, domain) {
     return true;
   }
   //other
-  return domain.startsWith('.' + env);
+  return domain.startsWith("." + env);
 }
 
-function sendCookieMessageToTab(id, cookie, env) {
+function sendCookieMessageToTab(id, cookie, env, actionType) {
   const isApplicable = isCookieApplicable(env, cookie ? cookie.domain : null);
+  let type;
+  switch (actionType) {
+    case "retrieve":
+      type = "TOKEN_INFO";
+      break;
+    case "refresh":
+      type = "READY_TO_SUBMIT";
+      break;
+  }
   chrome.tabs.sendMessage(id, {
-    type: "TOKEN_INFO",
+    type,
     jwtToken: cookie && isApplicable ? cookie.value : null,
   });
 }
