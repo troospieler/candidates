@@ -2,12 +2,6 @@
   padding: 20px;
 }
 
-.required-value:after {
-  content: "*";
-  color: #ff5252;
-  font-size: 16px;
-}
-
 .add-candidate-cta {
   color: white;
   background-color: #ff5252;
@@ -56,20 +50,25 @@ option {
   margin-bottom: 10px;
 }
 
-.candidate-phone-container {
+.add-to-base {
+  padding-top: 20px;
   position: relative;
-  padding-bottom: 30px;
 }
 
-.candidate-phone-container::after {
+.add-to-base::before {
   content: "";
   display: block;
   position: absolute;
-  bottom: 0px;
+  top: 0;
   width: calc(100% + 40px);
   height: 1px;
   background-color: #e0e7eb;
-  margin: 20px -20px;
+  margin-left: -20px;
+}
+
+.candidate-phone-container {
+  position: relative;
+  padding-bottom: 10px;
 }
 
 .already-in-base-notification {
@@ -86,4 +85,79 @@ option {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.no-contacts-on-page {
+  background-color: #fffde7;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  height: 100%;
+}
+
+.add-contacts-for-candidate {
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.add-contacts-for-candidate-exclamation {
+  display: inline-block;
+  transform: rotate(180deg);
+  font-size: 13px;
+}
+
+.add-contacts-explanation {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 20px;
+  max-width: 240px;
+  text-align: center;
+}
+
+.or {
+  display: flex;
+  align-items: center;
+}
+
+.or-text {
+  margin: 5px;
+  color: #c8d1d6;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.or-line {
+  height: 1px;
+  background-color: #c8d1d6;
+  width: 100%;
+  position: relative;
+}
+
+.highlighting-input {
+  /* border: none; */
+  box-shadow: inset 0 0 0 1px transparent;
+  box-sizing: border-box; 
+  animation: highlighting 2s ease-in-out forwards;
+}
+
+@keyframes highlighting {
+  0% {
+    border-color: #687e88;
+    box-shadow: inset 0 0 0 1px transparent;
+    transform: scale(1);
+  }
+  50% {
+    border-color: #3bc372;
+    box-shadow: inset 0 0 0 2px #3bc372;
+    transform: scale(1.015);
+  }
+  100% {
+    border-color: #687e88;
+    box-shadow: inset 0 0 0 1px transparent;
+    transform: scale(1);
+  }
 }

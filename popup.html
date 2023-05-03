@@ -14,11 +14,6 @@
   </div>
   <!-- LOGIN PLUGIN APPEARANCE -->
   <div class="entrance-window hide">
-    <img
-      class="entrance-figure"
-      src="https://images.cf-rabota.com.ua/alliance-ats/plugin/entrance-figure.png"
-      alt="pic"
-    />
     <div class="entrance-window-heading">
       <img
         width="120"
@@ -37,8 +32,8 @@
     </div>
     <div class="helper-explanatory">Помічник з додавання кандидатів</div>
     <div class="authorization-explanatory">
-      Авторизуйтесь у плагіні як роботодавець, та зберігайте кандидатів із
-      різних джерел до вашої бази Helper в пару кліків
+      Авторизуйтесь як роботодавець,<br />та зберігайте кандидатів із різних
+      джерел<br />до вашої бази Helper в пару кліків
     </div>
     <button class="login-btn" id="loginBtn">
       <img
@@ -81,16 +76,13 @@
         id="candidateInfoName"
         type="text"
       />
-      <label class="input-label required-value">Електронна пошта</label>
+      <label class="input-label">Електронна пошта</label>
       <input
         class="input"
         name="candidate-emails"
         id="candidateInfoEmail"
         type="text"
       />
-      <div id="obligatoryEmail" class="empty-value hide">
-        Пошта обов’язкова, щоб додати до бази
-      </div>
       <div id="incorrectEmail" class="not-correct-value hide">
         Будь-ласка, перевірте формат пошти
       </div>
@@ -103,9 +95,32 @@
           id="candidateInfoPhone"
           type="text"
         />
+        <div id="incorrectPhone" class="not-correct-value hide">
+          Будь-ласка, перевірте формат телеофну
+        </div>
+      </div>
+      <!-- no contacts block -->
+      <div class="no-contacts-on-page hide">
+        <div class="add-contacts-for-candidate">
+          <span class="add-contacts-for-candidate-exclamation">ⓘ</span>
+          <span> Додайте спосіб зв’язку з кандидатом </span>
+        </div>
+        <div class="add-contacts-explanation">
+          Перевірте, чи відкриті контакти, відкрийте їх за необхідністю
+        </div>
+        <div style="width: 100%" class="or">
+          <div class="or-line"></div>
+          <div class="or-text">або</div>
+          <div class="or-line"></div>
+        </div>
+        <div class="add-contacts-explanation">
+          Введіть електронну пошту чи телефон кандидата вручну
+        </div>
       </div>
 
-      <label class="candidate-section-title">Додати до бази кандидатів</label>
+      <label class="candidate-section-title add-to-base"
+        >Додати до бази кандидатів</label
+      >
       <div class="select-container">
         <select name="ats-destination" class="ats-destination-select">
           <option value="">Не обрано</option>
@@ -182,11 +197,6 @@
       <b>Переглянути в Helper</b>
     </a>
     <button class="close-on-success-btn">Закрити</button>
-  </div>
-
-  <div class="no-ats-access hide">
-    <div>YOU HAVE NO ACCESS</div>
-    <div>NOTHING TO SEE HERE</div>
   </div>
 </div>
 

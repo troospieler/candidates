@@ -2,7 +2,8 @@
 // consider moving getTab() logic to popup.js
 // and maybe move getAllTabs() logic to popup.js too
 
-export const DOMAIN = "robota.ua";
+// export const DOMAIN = "robota.ua";
+export const DOMAIN = "rabota.ua";
 
 export async function getTab() {
   let queryOptions = { active: true, currentWindow: true };
@@ -25,23 +26,6 @@ export function getEnvQueryParam(url) {
       ?.find((el) => el.startsWith("env="))
       ?.split("=")[1] ?? null
   );
-}
-
-//leave form now
-//delete if redundant in next iterations
-export async function chromeStorageToken() {
-  const tokenData = await chrome.storage.local.get("atsToken");
-  return tokenData;
-}
-
-export function localstorageToken() {
-  try {
-    const token = localStorage.getItem("atsToken");
-    return token;
-  } catch (e) {
-    console.log("no token parsed from localstorage, ", e);
-    return null;
-  }
 }
 
 export const checkAccess = async (token,env) => {

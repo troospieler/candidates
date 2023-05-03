@@ -27,14 +27,6 @@
   z-index: 2;
 }
 
-.entrance-figure {
-  width: 45px;
-  position: absolute;
-  right: 20%;
-  top: 5%;
-  z-index: 2;
-}
-
 .close-on-entrance-plugin-btn {
   margin-left: auto;
   align-self: flex-start;

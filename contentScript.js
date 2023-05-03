@@ -1,11 +1,15 @@
 (async () => {
   const currentUrl = window.location.href;
-  const match = currentUrl.match(
+
+  const workUrlMatch = currentUrl.match(
     /^https:\/\/www\.work\.ua(\/\w{0,})?\/resumes\/(\d+)\/?(?:\?.*)?$/
   );
 
+  // ADD MATCH FOR OTHER PLATFORMS
+  // NEXT IN LINE -- OLX.UA
+
   // prevent plugin open/functionality if not correct url
-  if (!match) {
+  if (!workUrlMatch) {
     return;
   }
 
@@ -14,16 +18,18 @@
   let isResumeFound = false;
   let currentCandidate = null;
   let token = null;
+  let hasNoContactsError = false;
   let hasCandidateEmailError = false;
   let hasAtsDestinationError = false;
+  let hasCandidatePhoneError = false;
   let isInDataBase = false;
   let isMain = false;
   let isPluginWindowOpen = false;
   let hasAtsAccess = true;
   const port = chrome.runtime.connect({ name: "contentScript" });
 
-  // const PHONE_PATTERN =
-  //   /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im;
+  const PHONE_PATTERN =
+    /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/;
   const EMAIL_PATTERN = /^[\w-]+[_.\-\w]*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
 
   // get access to utils methods
@@ -49,7 +55,6 @@
       const fetchingStateBlock = document.querySelector(".fetching-state");
       const candidateInfoBlock = document.querySelector(".candidate-info");
       const successBlock = document.querySelector(".add-success");
-      const noAccessBlock = document.querySelector(".no-ats-access");
 
       //listen to loginBtn on init
       const loginBtn = document.querySelector(".login-btn");
@@ -73,11 +78,7 @@
           entranceWindowBlock.classList.add("hide");
           fetchingStateBlock.classList.add("hide");
           candidateInfoBlock.classList.add("hide");
-          noAccessBlock.classList.add("hide");
           token = message.jwtToken ? "Bearer " + message.jwtToken : null;
-          const isEmployer = token
-            ? utils.parseJwt(token)?.IsEmployer === "1"
-            : false;
           if (!token) {
             triggerUserInfoBlockAppearance(false);
             entranceWindowBlock.classList.remove("hide");
@@ -87,10 +88,8 @@
               utils.getEnvQueryParam(document.location.href)
             );
             if (!hasAtsAccess) {
-              triggerUserInfoBlockAppearance(isEmployer);
-              isEmployer
-                ? noAccessBlock.classList.remove("hide")
-                : entranceWindowBlock.classList.remove("hide");
+              triggerUserInfoBlockAppearance(false);
+              entranceWindowBlock.classList.remove("hide");
             } else if (!currentCandidate) {
               triggerUserInfoBlockAppearance(true);
               fetchingStateBlock.classList.remove("hide");
@@ -109,6 +108,10 @@
           prefillCandidateForm(currentResumeId);
         }
         if (type === "ICON_CLICKED") {
+          const successBlock = document.querySelector(".add-success");
+          if (!successBlock.classList.contains("hide") && isPluginWindowOpen) {
+            hideSuccess();
+          }
           proceedPLuginTriggered();
         }
         // USING FOR LOGGING DATA FROM BACKGROUND CONTEXT
@@ -254,6 +257,15 @@
           }
         }
 
+        if (
+          (!currentCandidate.phones || !currentCandidate.phones.length) &&
+          (!currentCandidate.emails || !currentCandidate.emails.length)
+        ) {
+          const noContactsWarning = document.querySelector(".no-contacts-on-page")
+          noContactsWarning.classList.remove('hide')
+          highlightInput()
+        }
+
         const select = document.querySelector(".ats-destination-select");
         const notPicked = document.querySelector("#destinationNotPicked");
         select.addEventListener("change", () => {
@@ -265,93 +277,121 @@
         const candidateForm = document.querySelector(".candidate-form");
         candidateForm.addEventListener("submit", async (event) => {
           event.preventDefault();
-          hasAtsDestinationError = false;
-          hasCandidateEmailError = false;
-
-          const obligatoryEmail = document.querySelector("#obligatoryEmail");
-          const incorrectEmail = document.querySelector("#incorrectEmail");
-
-          const formValue = utils.getFormValue(candidateForm);
-
-          // checking validity
-          if (!formValue["ats-destination"]) {
-            hasAtsDestinationError = true;
-            notPicked.classList.remove("hide");
-          }
-
-          if (!formValue["candidate-emails"]) {
-            hasCandidateEmailError = true;
-            obligatoryEmail.classList.remove("hide");
-            incorrectEmail.classList.add("hide");
-          } else if (!EMAIL_PATTERN.test(formValue["candidate-emails"])) {
-            hasCandidateEmailError = true;
-            incorrectEmail.classList.remove("hide");
-            obligatoryEmail.classList.add("hide");
-          }
-
-          if (!hasCandidateEmailError) {
-            obligatoryEmail.classList.add("hide");
-            incorrectEmail.classList.add("hide");
-          }
-
-          if (hasCandidateEmailError || hasAtsDestinationError) {
-            return;
-          }
-          const submitInput = {
-            source: "Work",
-            id: currentResumeId,
-            text: currentCandidate.text,
-            fullName: formValue["candidate-name"]?.length
-              ? formValue["candidate-name"]
-              : null,
-            phones: [formValue["candidate-phones"]],
-            emails: [formValue["candidate-emails"]],
-            ...(formValue["ats-destination"] === "db"
-              ? {}
-              : { projectId: formValue["ats-destination"] }),
-          };
-
-          const cta = document.querySelector(".add-candidate-cta");
-          cta.classList.add("processing");
-          const result = await utils.addCandidate(
-            { ...submitInput },
-            utils.getEnvQueryParam(document.location.href),
-            token
-          );
-
-          if (!result?.ok && result?.status === 403) {
-            hasAtsAccess = false;
-            const candidateInfoBlock =
-              document.querySelector(".candidate-info");
-            const noAccessBlock = document.querySelector(".no-ats-access");
-            candidateInfoBlock.classList.add("hide");
-            noAccessBlock.classList.remove("hide");
-            return;
-          }
-
-          if (!!result && result instanceof Object) {
-            const nameContainer = document.querySelector(
-              ".added-candidate-name"
-            );
-            nameContainer.innerHTML = result.parsedResume?.fullName;
-            const goToCandidate = document.querySelector(
-              ".go-to-candidate-link"
-            );
-            goToCandidate.href = result.candidate?.url;
-            const successBlock = document.querySelector(".add-success");
-            const candidateInfoBlock =
-              document.querySelector(".candidate-info");
-            successBlock.classList.remove("hide");
-            candidateInfoBlock.classList.add("hide");
-          } else {
-            const errorOnAdding = document.querySelector("#errorOnAdding");
-            errorOnAdding.classList.remove("hide");
-          }
-          cta.classList.remove("processing");
+          await sumbitCandidate();
         });
         onCandidateFound();
       }
     }
+  }
+
+  async function sumbitCandidate() {
+    const notPicked = document.querySelector("#destinationNotPicked");
+    const candidateForm = document.querySelector(".candidate-form");
+    const noContactsWarning = document.querySelector(".no-contacts-on-page") 
+
+    hasNoContactsError = false
+    hasAtsDestinationError = false;
+    hasCandidateEmailError = false;
+    hasCandidatePhoneError = false;
+
+    // const obligatoryEmail = document.querySelector("#obligatoryEmail");
+    const incorrectEmail = document.querySelector("#incorrectEmail");
+    const incorrectPhone = document.querySelector("#incorrectPhone");
+
+    const formValue = utils.getFormValue(candidateForm);
+
+    // checking validity
+    if (!formValue["ats-destination"]) {
+      hasAtsDestinationError = true;
+      notPicked.classList.remove("hide");
+    }
+
+    if (!formValue["candidate-phones"] && !formValue["candidate-emails"]) {
+      hasNoContactsError = true
+      noContactsWarning.classList.remove('hide')
+      highlightInput()
+    }
+
+    if(!!formValue["candidate-emails"] && !EMAIL_PATTERN.test(formValue["candidate-emails"])) {
+      hasCandidateEmailError = true;
+      incorrectEmail.classList.remove("hide");
+    }
+
+    if(!!formValue["candidate-phones"] && !PHONE_PATTERN.test(cleanedUpPhoneValue(formValue["candidate-phones"]))) {
+      hasCandidatePhoneError = true;
+      incorrectPhone.classList.remove("hide");
+    }
+
+    if (!hasCandidateEmailError) {
+      incorrectEmail.classList.add("hide");
+    }
+
+    if(!hasCandidatePhoneError) {
+      incorrectPhone.classList.add("hide");
+    }
+
+    if(!hasNoContactsError) {
+      noContactsWarning.classList.add('hide')
+    }
+
+    if (
+      hasNoContactsError ||
+      hasCandidateEmailError ||
+      hasCandidatePhoneError ||
+      hasAtsDestinationError
+    ) {
+      return;
+    }
+
+    const submitInput = {
+      // source field will depend on current url match
+      // add it when new integration will be implemented
+      source: "Work",
+      id: currentResumeId,
+      text: currentCandidate.text,
+      fullName: formValue["candidate-name"]?.length
+        ? formValue["candidate-name"]
+        : null,
+      phones: [cleanedUpPhoneValue(formValue["candidate-phones"])],
+      emails: [formValue["candidate-emails"]],
+      ...(formValue["ats-destination"] === "db"
+        ? {}
+        : { projectId: formValue["ats-destination"] }),
+    };
+
+    const cta = document.querySelector(".add-candidate-cta");
+    cta.classList.add("processing");
+    const result = await utils.addCandidate(
+      { ...submitInput },
+      utils.getEnvQueryParam(document.location.href),
+      token
+    );
+
+    if (!result?.ok && result?.status === 403) {
+      hasAtsAccess = false;
+      const candidateInfoBlock = document.querySelector(".candidate-info");
+      const entranceWindowBlock = document.querySelector(".entrance-window");
+
+      triggerUserInfoBlockAppearance(false);
+      candidateInfoBlock.classList.add("hide");
+      entranceWindowBlock.classList.remove("hide");
+      return;
+    }
+
+    if (!!result && result instanceof Object) {
+      const nameContainer = document.querySelector(".added-candidate-name");
+      nameContainer.innerHTML = result.parsedResume?.fullName;
+      const goToCandidate = document.querySelector(".go-to-candidate-link");
+      goToCandidate.href = result.candidate?.url;
+      const successBlock = document.querySelector(".add-success");
+      const candidateInfoBlock = document.querySelector(".candidate-info");
+      successBlock.classList.remove("hide");
+      candidateInfoBlock.classList.add("hide");
+    } else {
+      const errorOnAdding = document.querySelector("#errorOnAdding");
+      errorOnAdding.classList.remove("hide");
+    }
+    cta.classList.remove("processing");
   }
 
   async function patchSelectWithProjects(selectItem) {
@@ -416,6 +456,27 @@
     fetchingStateBlock.classList.add("hide");
     const candidateInfoBlock = document.querySelector(".candidate-info");
     candidateInfoBlock.classList.remove("hide");
+  }
+
+  function highlightInput() {
+    const email = document.querySelector('#candidateInfoEmail')
+    const phone = document.querySelector('#candidateInfoPhone')
+    email.classList.add('highlighting-input')
+    phone.classList.add('highlighting-input')
+    email.addEventListener('animationend', (e) => {
+      if(e.animationName==='highlighting') {
+        email.classList.remove('highlighting-input')
+      }
+    })
+    phone.addEventListener('animationend', (e) => {
+      if(e.animationName==='highlighting') {
+        phone.classList.remove('highlighting-input')
+      }
+    })
+  }
+
+  function cleanedUpPhoneValue(input) {
+    return input.replace(/[\(\)\+\s-]/gm, '')
   }
 
   const getCandidateInfo = (element = resumeContainer) => {
