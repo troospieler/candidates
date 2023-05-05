@@ -8,8 +8,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 10px;
-  line-height: 10px;
+  font-size: 12px;
+  line-height: 14px;
   margin-bottom: 10px;
   z-index: 2;
 }

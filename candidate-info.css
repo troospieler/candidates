@@ -105,8 +105,10 @@ option {
 }
 
 .add-contacts-for-candidate {
+  display: flex;
+  margin-bottom: 10px;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 20px;
 }
 
