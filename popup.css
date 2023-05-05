@@ -19,7 +19,7 @@
   overflow: hidden;
   padding-bottom: 20px;
   max-height: 95vh;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .cta-button {
