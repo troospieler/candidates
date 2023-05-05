@@ -1,5 +1,5 @@
 {
-  "name": "Helper для кандидатів",
+  "name": "Helper | Кандидати",
   "version": "0.0.6",
   "description": "Додавайте кандидатів до Helper напряму з інтеграцій",
   "permissions": ["storage", "tabs", "cookies"],

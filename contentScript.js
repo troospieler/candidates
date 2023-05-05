@@ -26,7 +26,7 @@
   let isMain = false;
   let isPluginWindowOpen = false;
   let hasAtsAccess = true;
-  let port;
+  // let port;
 
   const PHONE_PATTERN =
     /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/;
@@ -40,7 +40,7 @@
   await fetch(chrome.runtime.getURL("popup.html"))
     .then((response) => response.text())
     .then(async (html) => {
-      port = chrome.runtime.connect({ name: "contentScript" });
+      // port = chrome.runtime.connect({ name: "contentScript" });
       const manifest = chrome.runtime.getManifest();
       console.log(
         `%cHelper ${manifest.version}`,
@@ -99,10 +99,12 @@
               candidateInfoBlock.classList.remove("hide");
             }
           }
-
-          port.postMessage({
+          chrome.runtime.sendMessage({
             type: "VIEW_READY",
-          });
+          })
+          // port.postMessage({
+          //   type: "VIEW_READY",
+          // });
         }
         if (type === "TRIGGER_PLUGIN") {
           triggerAppearance();
@@ -183,10 +185,14 @@
   function proceedPLuginTriggered() {
     const env = utils.getEnvQueryParam(document.location.href);
     !isPluginWindowOpen
-      ? port.postMessage({
-          type: "GET_JWT_TOKEN",
+      ? chrome.runtime.sendMessage({
+        type: "GET_JWT_TOKEN",
           env,
-        })
+      })
+      // ? port.postMessage({
+      //     type: "GET_JWT_TOKEN",
+      //     env,
+      //   })
       : triggerAppearance();
   }
 
@@ -292,10 +298,14 @@
   function sendSubmitRequestMessage() {
     const env = utils.getEnvQueryParam(document.location.href);
     // sending message to catch it in background.js
-    port.postMessage({
+    chrome.runtime.sendMessage({
       type: "SUBMIT_REQUEST",
       env,
-    });
+    })
+    // port.postMessage({
+    //   type: "SUBMIT_REQUEST",
+    //   env,
+    // });
   }
 
   async function sumbitCandidate() {
