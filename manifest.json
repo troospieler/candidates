@@ -4,7 +4,6 @@
   "description": "Додавайте кандидатів до Helper напряму з інтеграцій",
   "permissions": ["storage", "tabs", "cookies"],
   "host_permissions": [
-    "https://www.work.ua/*",
     "https://*.rabota.ua/*",
     "https://*.robota.ua/*"
   ],
@@ -26,7 +25,6 @@
         "candidate-info.css",
         "success-window.css"
       ],
-      "run_at": "document_start",
       "match_about_blank": true
     }
   ],
