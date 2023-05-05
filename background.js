@@ -25,6 +25,13 @@ chrome.runtime.onConnect.addListener((port) => {
       proceedActionWithCookie(tab.id, env, "refresh");
     }
   });
+  port.onDisconnect.addListener(async () => {
+    let queryOptions = { active: true, currentWindow: true };
+    let [tab] = await chrome.tabs.query(queryOptions);
+    chrome.tabs.sendMessage(tab.id, {
+      type: "ON_DISCONNECT",
+    });
+  });
 });
 
 function proceedActionWithCookie(id, env, actionType) {

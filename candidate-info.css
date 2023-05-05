@@ -1,5 +1,6 @@
 .candidate-info {
   padding: 20px;
+  padding-bottom: 0;
 }
 
 .add-candidate-cta {
@@ -118,12 +119,6 @@ option {
 
 .ats-in-base-link:hover img {
   width: 18px;
-}
-
-.add-contacts-for-candidate-exclamation {
-  display: inline-block;
-  transform: rotate(180deg);
-  font-size: 13px;
 }
 
 .add-contacts-explanation {

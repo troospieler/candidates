@@ -57,7 +57,7 @@
       "48": "assets/plugin-icon-main.png",
       "128": "assets/plugin-icon-big.png"
     },
-    "default_title": "Helper для кандидатів"
+    "default_title": "Helper | Кандидати"
   },
   "manifest_version": 3
 }

@@ -17,6 +17,9 @@
   border-radius: 5px;
   box-shadow: 0px 4px 7px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  padding-bottom: 20px;
+  max-height: 95vh;
+  overflow-y: scroll;
 }
 
 .cta-button {

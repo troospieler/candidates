@@ -1,5 +1,6 @@
 .entrance-window {
   padding: 20px;
+  padding-bottom: 0;
 }
 
 .entrance-window-heading {
@@ -23,7 +24,7 @@
   position: relative;
   font-size: 16px;
   line-height: 20px;
-  margin-bottom: 80px;
+  margin-bottom: 70px;
   z-index: 2;
 }
 
@@ -38,6 +39,12 @@
   font-weight: bold;
   text-align: center;
   margin-bottom: 10px;
+}
+
+.how-it-works {
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 20px;
 }
 
 .entrance-explainer {

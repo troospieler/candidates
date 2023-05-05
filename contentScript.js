@@ -26,7 +26,7 @@
   let isMain = false;
   let isPluginWindowOpen = false;
   let hasAtsAccess = true;
-  const port = chrome.runtime.connect({ name: "contentScript" });
+  let port;
 
   const PHONE_PATTERN =
     /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/;
@@ -40,6 +40,7 @@
   await fetch(chrome.runtime.getURL("popup.html"))
     .then((response) => response.text())
     .then(async (html) => {
+      port = chrome.runtime.connect({ name: "contentScript" });
       const manifest = chrome.runtime.getManifest();
       console.log(
         `%cHelper ${manifest.version}`,
@@ -118,6 +119,9 @@
         if (type === "READY_TO_SUBMIT") {
           setToken(message);
           await sumbitCandidate();
+        }
+        if (type === "ON_DISCONNECT") {
+          port = chrome.runtime.connect({ name: "contentScript" });
         }
         // USING FOR LOGGING DATA FROM BACKGROUND CONTEXT
         if (type === "LOGGING_DATA_TO_CONSOLE") {
