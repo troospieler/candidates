@@ -26,7 +26,6 @@
   let isMain = false;
   let isPluginWindowOpen = false;
   let hasAtsAccess = true;
-  // let port;
 
   const PHONE_PATTERN =
     /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/;
@@ -40,7 +39,6 @@
   await fetch(chrome.runtime.getURL("popup.html"))
     .then((response) => response.text())
     .then(async (html) => {
-      // port = chrome.runtime.connect({ name: "contentScript" });
       const manifest = chrome.runtime.getManifest();
       console.log(
         `%cHelper ${manifest.version}`,
@@ -101,10 +99,7 @@
           }
           chrome.runtime.sendMessage({
             type: "VIEW_READY",
-          })
-          // port.postMessage({
-          //   type: "VIEW_READY",
-          // });
+          });
         }
         if (type === "TRIGGER_PLUGIN") {
           triggerAppearance();
@@ -121,9 +116,6 @@
         if (type === "READY_TO_SUBMIT") {
           setToken(message);
           await sumbitCandidate();
-        }
-        if (type === "ON_DISCONNECT") {
-          port = chrome.runtime.connect({ name: "contentScript" });
         }
         // USING FOR LOGGING DATA FROM BACKGROUND CONTEXT
         if (type === "LOGGING_DATA_TO_CONSOLE") {
@@ -186,13 +178,9 @@
     const env = utils.getEnvQueryParam(document.location.href);
     !isPluginWindowOpen
       ? chrome.runtime.sendMessage({
-        type: "GET_JWT_TOKEN",
+          type: "GET_JWT_TOKEN",
           env,
-      })
-      // ? port.postMessage({
-      //     type: "GET_JWT_TOKEN",
-      //     env,
-      //   })
+        })
       : triggerAppearance();
   }
 
@@ -301,11 +289,7 @@
     chrome.runtime.sendMessage({
       type: "SUBMIT_REQUEST",
       env,
-    })
-    // port.postMessage({
-    //   type: "SUBMIT_REQUEST",
-    //   env,
-    // });
+    });
   }
 
   async function sumbitCandidate() {

@@ -24,36 +24,6 @@ chrome.runtime.onMessage.addListener(async (message) => {
   }
 });
 
-// chrome.runtime.onConnect.addListener((port) => {
-//   port.onMessage.addListener(async (message) => {
-//     const { env } = message;
-//     let queryOptions = { active: true, currentWindow: true };
-//     let [tab] = await chrome.tabs.query(queryOptions);
-
-//     if (message.type === "GET_JWT_TOKEN") {
-//       proceedActionWithCookie(tab.id, env, "retrieve");
-//     }
-
-//     if (message.type === "VIEW_READY") {
-//       chrome.tabs.sendMessage(tab.id, {
-//         type: "TRIGGER_PLUGIN",
-//       });
-//     }
-
-//     if (message.type === "SUBMIT_REQUEST") {
-//       proceedActionWithCookie(tab.id, env, "refresh");
-//     }
-//   });
-//   port.onDisconnect.addListener(async () => {
-//     let queryOptions = { active: true, currentWindow: true };
-//     let [tab] = await chrome.tabs.query(queryOptions);
-//     sendLoggingDataMessageToTab(tab.id, "disconnected");
-//     chrome.tabs.sendMessage(tab.id, {
-//       type: "ON_DISCONNECT",
-//     });
-//   });
-// });
-
 function proceedActionWithCookie(id, env, actionType) {
   const cookieSettingsByNewDomain = {
     url: `https://${env ? env + "." : ""}${NEW_DOMAIN}`,
@@ -66,7 +36,6 @@ function proceedActionWithCookie(id, env, actionType) {
   chrome.cookies.get(cookieSettingsByNewDomain, (newDomainCookie) => {
     if (!newDomainCookie) {
       chrome.cookies.get(cookieSettingsByOldDomain, (oldDomainCookie) => {
-        sendLoggingDataMessageToTab(id, oldDomainCookie);
         sendCookieMessageToTab(id, oldDomainCookie, env, actionType);
       });
     } else {
