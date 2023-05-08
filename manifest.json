@@ -3,10 +3,7 @@
   "version": "0.0.6",
   "description": "Додавайте кандидатів до Helper напряму з інтеграцій",
   "permissions": ["storage", "tabs", "cookies"],
-  "host_permissions": [
-    "https://*.rabota.ua/*",
-    "https://*.robota.ua/*"
-  ],
+  "host_permissions": ["https://*.rabota.ua/*", "https://*.robota.ua/*"],
   "externally_connectable": {
     "matches": ["https://www.work.ua/*resumes/*"],
     "js": ["contentScript.js"]
