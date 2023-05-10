@@ -633,32 +633,34 @@
 
   const patchPhoneInputValue = () => {
     const container = document.querySelector('[data-testid="phones-container"]');
-    const phoneLink = document.querySelector('a[data-testid="contact-phone"]');
-    const noContactsWarning = document.querySelector(".no-contacts-on-page");
-    if (phoneLink) {
-      const phoneNumber = phoneLink.innerText;
-      noContactsWarning.classList.add("hide");
-      prefillCandidatePhoneValue(phoneNumber);
-    } else {
-      const callback = function (mutationsList, observer) {
-        for (const mutation of mutationsList) {
-          if (mutation.type === "childList" && mutation.addedNodes.length) {
-            const phoneLinkAfterMutation = mutation.addedNodes[0].querySelector('a[data-testid="contact-phone"]');
-            if (phoneLinkAfterMutation) {
-              const phoneNumber = phoneLinkAfterMutation.innerText;
-              noContactsWarning.classList.add("hide");
-              prefillCandidatePhoneValue(phoneNumber);
-              observer.disconnect();
+    if (!!container) {
+      const phoneLink = document.querySelector('a[data-testid="contact-phone"]');
+      const noContactsWarning = document.querySelector(".no-contacts-on-page");
+      if (phoneLink) {
+        const phoneNumber = phoneLink.innerText;
+        noContactsWarning.classList.add("hide");
+        prefillCandidatePhoneValue(phoneNumber);
+      } else {
+        const callback = function (mutationsList, observer) {
+          for (const mutation of mutationsList) {
+            if (mutation.type === "childList" && mutation.addedNodes.length) {
+              const phoneLinkAfterMutation = mutation.addedNodes[0].querySelector('a[data-testid="contact-phone"]');
+              if (phoneLinkAfterMutation) {
+                const phoneNumber = phoneLinkAfterMutation.innerText;
+                noContactsWarning.classList.add("hide");
+                prefillCandidatePhoneValue(phoneNumber);
+                observer.disconnect();
+              }
             }
           }
-        }
-      };
-      const observer = new MutationObserver(callback);
-      const config = {
-        childList: true,
-        subtree: true,
-      };
-      observer.observe(container, config);
+        };
+        const observer = new MutationObserver(callback);
+        const config = {
+          childList: true,
+          subtree: true,
+        };
+        observer.observe(container, config);
+      }
     }
   };
 
@@ -678,11 +680,10 @@
     currentCandidate.emails = [email];
   };
 
+  // check if this is needed
   const extractEmails = (text) => {
     const multiLineEmail = new RegExp(EMAIL_PATTERN, "gm");
     const multiLinePhone = new RegExp(PHONE_PATTERN, "gm");
-    console.log(text.match(multiLineEmail));
-    console.log(text.match(multiLinePhone));
     return text.match(multiLineEmail);
     // return text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi);
   };
