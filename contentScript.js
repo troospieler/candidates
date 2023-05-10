@@ -1,21 +1,23 @@
 (async () => {
   const currentUrl = window.location.href;
 
-  const workUrlMatch = currentUrl.match(
-    /^https:\/\/www\.work\.ua(\/\w{0,})?\/resumes\/(\d+)\/?(?:\?.*)?$/
-  );
+  const workUrlMatch = currentUrl.match(/^https:\/\/www\.work\.ua(\/\w{0,})?\/resumes\/(\d+)\/?(?:\?.*)?$/);
+
+  const olxResumeUrlMatch = currentUrl.match(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/obyavlenie\/\w{1,}/);
+  const olxApplyUrlMatch = currentUrl.match(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/myaccount\/ep\/ad\/[\w\/]{1,}/);
+  // const olxApplyUrlMatch = currentUrl.match(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/myaccount\/ep\/ad\/\w{1,}\/\?applicationId.{1,}/);
 
   // ADD MATCH FOR OTHER PLATFORMS
   // NEXT IN LINE -- OLX.UA
 
   // prevent plugin open/functionality if not correct url
-  if (!workUrlMatch) {
+  if (!workUrlMatch && !olxResumeUrlMatch && !olxApplyUrlMatch) {
     return;
   }
 
-  let currentResumeId = "";
+  let currentResumeId = null;
   let resumeContainer = null;
-  let isResumeFound = false;
+  // let isResumeFound = false;
   let currentCandidate = null;
   let token = null;
   let hasNoContactsError = false;
@@ -27,13 +29,12 @@
   let isPluginWindowOpen = false;
   let hasAtsAccess = true;
 
-  const PHONE_PATTERN =
-    /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/;
+  const PHONE_PATTERN = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/;
   const EMAIL_PATTERN = /^[\w-]+[_.\-\w]*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
 
   // get access to utils methods
-  const src = chrome.runtime.getURL("utils.js");
-  const utils = await import(src);
+  const utilsSrc = chrome.runtime.getURL("utils.js");
+  const utils = await import(utilsSrc);
 
   //injecting popup.html to current web page
   await fetch(chrome.runtime.getURL("popup.html"))
@@ -59,9 +60,7 @@
       const loginBtn = document.querySelector(".login-btn");
       loginBtn.addEventListener("click", () => {
         const env = utils.getEnvQueryParam(document.location.href);
-        window.open(
-          `https://helper.${env ? env + "." : ""}${utils.DOMAIN}/login`
-        );
+        window.open(`https://helper.${env ? env + "." : ""}${utils.DOMAIN}/login`);
         triggerAppearance();
       });
 
@@ -82,10 +81,7 @@
             triggerUserInfoBlockAppearance(false);
             entranceWindowBlock.classList.remove("hide");
           } else {
-            hasAtsAccess = await utils.checkAccess(
-              token,
-              utils.getEnvQueryParam(document.location.href)
-            );
+            hasAtsAccess = await utils.checkAccess(token, utils.getEnvQueryParam(document.location.href));
             if (!hasAtsAccess) {
               triggerUserInfoBlockAppearance(false);
               entranceWindowBlock.classList.remove("hide");
@@ -123,8 +119,11 @@
         }
       });
 
-      const firstPartOfUrl = document.location.href.split("resumes/")[1];
-      currentResumeId = firstPartOfUrl.slice(0, firstPartOfUrl.indexOf("/"));
+      // currentResumeId by url
+      if (workUrlMatch) {
+        const firstPartOfUrl = document.location.href.split("resumes/")[1];
+        currentResumeId = firstPartOfUrl.slice(0, firstPartOfUrl.indexOf("/"));
+      }
 
       //listening for cta button click to show popup and implement logic
       const ctaBtn = document.querySelector(".cta-button");
@@ -132,9 +131,7 @@
         proceedPLuginTriggered();
       });
 
-      const closeOnEntranceButton = document.querySelector(
-        ".close-on-entrance-plugin-btn"
-      );
+      const closeOnEntranceButton = document.querySelector(".close-on-entrance-plugin-btn");
       closeOnEntranceButton.addEventListener("click", () => {
         proceedPLuginTriggered();
       });
@@ -161,9 +158,16 @@
 
     ctaBtn.classList.toggle("hide");
     pluginWindow.classList.toggle("hide");
+
     // delete animation from cta button on plugin window open
     if (!isPluginWindowOpen) {
       ctaBtn.classList.remove("fetching-btn-state");
+    }
+
+    // corner case if plugin was opened on olx apply page before apply info was rendered in view
+    // changing currentCandidate to null so that form prefilling will be triggered again
+    if (!isPluginWindowOpen && !currentCandidate?.name) {
+      currentCandidate = null;
     }
   };
 
@@ -203,83 +207,199 @@
     triggerUserInfoBlockAppearance(!!token);
 
     if (!currentCandidate) {
-      resumeContainer = await utils.getWorkResumeContainer(resumeId);
-      const resume = getCandidateInfo(resumeContainer);
-      if (resume && !isResumeFound) {
-        isResumeFound = true;
+      currentCandidate = {};
+      // SPLIT BY URL CONDITION
+      // WORK RESUME PAGE
+      if (workUrlMatch) {
+        resumeContainer = utils.getWorkResumeContainer(resumeId);
+        const resume = getCandidateInfo(resumeContainer);
+        if (resume) {
+          currentCandidate.text = resume.text;
+          const name = document.querySelector(`#resume_${resumeId} div.row div h1`)?.innerText ?? null;
+          prefillCandidateNameValue(name);
 
-        currentCandidate = {};
-        currentCandidate.text = resume.text;
-
-        const name =
-          document.querySelector(`#resume_${resumeId} div.row div h1`)
-            ?.innerText ?? null;
-        if (name) {
-          currentCandidate.name = name;
-          const candidateName = document.querySelector("#candidateInfoName");
-          if (candidateName && candidateName instanceof HTMLInputElement) {
-            candidateName.value = name;
-          }
-        }
-
-        const contacts = resume?.children?.find(
-          (el) => phonesInResume(el) || emailsInResume(el)
-        )?.children;
-        if (contacts) {
-          const phone = contacts.find((el) => phonesInResume(el));
-          if (phone) {
-            const indexOfPhone = contacts.indexOf(phone);
-            const phoneNumber =
-              typeof indexOfPhone === "number"
-                ? contacts[indexOfPhone + 1].text
-                : null;
-            const phoneInput = document.querySelector("#candidateInfoPhone");
-            if (phoneInput && phoneInput instanceof HTMLInputElement) {
-              phoneInput.value = phoneNumber;
+          const contacts = resume?.children?.find((el) => phonesInResume(el) || emailsInResume(el))?.children;
+          if (contacts) {
+            const phone = contacts.find((el) => phonesInResume(el));
+            if (phone) {
+              const indexOfPhone = contacts.indexOf(phone);
+              const phoneNumber = typeof indexOfPhone === "number" ? contacts[indexOfPhone + 1].text : null;
+              prefillCandidatePhoneValue(phoneNumber);
             }
-            currentCandidate.phones = [phoneNumber];
-          }
-          const email = contacts.find((el) => emailsInResume(el));
-          if (email) {
-            const indexOfEmail = contacts.indexOf(email);
-            const emailValue =
-              typeof indexOfEmail === "number"
-                ? contacts[indexOfEmail + 1].text
-                : null;
-            const emailInput = document.querySelector("#candidateInfoEmail");
-            if (emailInput && emailInput instanceof HTMLInputElement) {
-              emailInput.value = emailValue;
+            const email = contacts.find((el) => emailsInResume(el));
+            if (email) {
+              const indexOfEmail = contacts.indexOf(email);
+              const emailValue = typeof indexOfEmail === "number" ? contacts[indexOfEmail + 1].text : null;
+              const emailInput = document.querySelector("#candidateInfoEmail");
+              if (emailInput && emailInput instanceof HTMLInputElement) {
+                emailInput.value = emailValue;
+              }
+              currentCandidate.emails = [emailValue];
             }
-            currentCandidate.emails = [emailValue];
           }
         }
-
-        if (
-          (!currentCandidate.phones || !currentCandidate.phones.length) &&
-          (!currentCandidate.emails || !currentCandidate.emails.length)
-        ) {
-          const noContactsWarning = document.querySelector(
-            ".no-contacts-on-page"
-          );
-          noContactsWarning.classList.remove("hide");
-          highlightInput();
-        }
-
-        const select = document.querySelector(".ats-destination-select");
-        const notPicked = document.querySelector("#destinationNotPicked");
-        select.addEventListener("change", () => {
-          notPicked.classList.add("hide");
-        });
-
-        await patchSelectWithProjects(select);
-
-        const candidateForm = document.querySelector(".candidate-form");
-        candidateForm.addEventListener("submit", async (event) => {
-          event.preventDefault();
-          sendSubmitRequestMessage();
-        });
-        onCandidateFound();
       }
+      // OLX RESUME PAGE
+      if (olxResumeUrlMatch) {
+        const descriptionHeaderText = "ОПИС";
+
+        const descriptionHeader = Array.from(document.querySelectorAll("h3:not([hidden])")).find((el) =>
+          el.innerText.includes(descriptionHeaderText)
+        );
+
+        if (descriptionHeader) {
+          const nextElement = descriptionHeader.nextElementSibling;
+          const textContent = nextElement ? nextElement.innerText.trim() : "";
+          currentCandidate.text = textContent;
+          extractEmails(currentCandidate.text);
+        }
+        const nameContainer = document.querySelector("a[data-testid='user-profile-link'][name='user_ads'] h4");
+        const name = nameContainer.innerText;
+        prefillCandidateNameValue(name);
+
+        //check if email is being found by Adam to know if parsing email in text is needed
+
+        patchPhoneInputValue();
+
+        // uncomment if open phone action should be applied on plugin open
+        // const button = document.querySelector('[data-testid="show-phone"]');
+        // button.click()
+      }
+
+      // OLX APPLY PAGE
+      if (olxApplyUrlMatch) {
+        prefillFormWithApplyInfo();
+        const apply = document.querySelector('article[data-testid="application-details"]');
+        if (apply) {
+          const observer = new MutationObserver((mutationsList) => {
+            let initialValue = "";
+            const possiblePhoneWords = ["Номер телефону", "Номер телефона"];
+            const possibleEmailWords = ["Электронная почта", "Електронна пошта"];
+            for (const mutation of mutationsList) {
+              if (
+                (mutation.type === "childList" &&
+                  (possiblePhoneWords.find((item) => mutation.target.innerText.includes(item)) ||
+                    possibleEmailWords.find((item) => mutation.target.innerText.includes(item)))) ||
+                mutation.type === "characterData"
+              ) {
+                if (!!mutation.target.innerText && mutation.target.innerText !== initialValue) {
+                  initialValue = mutation.target.innerText;
+                }
+                prefillFormWithApplyInfo();
+              }
+            }
+          });
+          const config = {
+            childList: true,
+            subtree: true,
+            characterData: true,
+            // attributes: true,
+          };
+          observer.observe(apply, config);
+        }
+      }
+
+      if (
+        (!currentCandidate.phones || !currentCandidate.phones.length) &&
+        (!currentCandidate.emails || !currentCandidate.emails.length)
+      ) {
+        const noContactsWarning = document.querySelector(".no-contacts-on-page");
+        noContactsWarning.classList.remove("hide");
+        highlightInput();
+      }
+
+      const select = document.querySelector(".ats-destination-select");
+      const notPicked = document.querySelector("#destinationNotPicked");
+      select.addEventListener("change", () => {
+        notPicked.classList.add("hide");
+      });
+
+      await patchSelectWithProjects(select);
+
+      const candidateForm = document.querySelector(".candidate-form");
+      candidateForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        sendSubmitRequestMessage();
+      });
+      onCandidateFound();
+      // resumeContainer = getResumeContainerByCurrentUrlMatch(resumeId)
+      // const resume = getCandidateInfo(resumeContainer);
+      // if (resume) { // && !isResumeFound
+
+      //   isResumeFound = true;
+
+      //   currentCandidate = {};
+      //   currentCandidate.text = resume.text;
+
+      //   const name =
+      //     document.querySelector(`#resume_${resumeId} div.row div h1`)
+      //       ?.innerText ?? null;
+      //   if (name) {
+      //     currentCandidate.name = name;
+      //     const candidateName = document.querySelector("#candidateInfoName");
+      //     if (candidateName && candidateName instanceof HTMLInputElement) {
+      //       candidateName.value = name;
+      //     }
+      //   }
+
+      //   const contacts = resume?.children?.find(
+      //     (el) => phonesInResume(el) || emailsInResume(el)
+      //   )?.children;
+      //   if (contacts) {
+      //     const phone = contacts.find((el) => phonesInResume(el));
+      //     if (phone) {
+      //       const indexOfPhone = contacts.indexOf(phone);
+      //       const phoneNumber =
+      //         typeof indexOfPhone === "number"
+      //           ? contacts[indexOfPhone + 1].text
+      //           : null;
+      //       const phoneInput = document.querySelector("#candidateInfoPhone");
+      //       if (phoneInput && phoneInput instanceof HTMLInputElement) {
+      //         phoneInput.value = phoneNumber;
+      //       }
+      //       currentCandidate.phones = [phoneNumber];
+      //     }
+      //     const email = contacts.find((el) => emailsInResume(el));
+      //     if (email) {
+      //       const indexOfEmail = contacts.indexOf(email);
+      //       const emailValue =
+      //         typeof indexOfEmail === "number"
+      //           ? contacts[indexOfEmail + 1].text
+      //           : null;
+      //       const emailInput = document.querySelector("#candidateInfoEmail");
+      //       if (emailInput && emailInput instanceof HTMLInputElement) {
+      //         emailInput.value = emailValue;
+      //       }
+      //       currentCandidate.emails = [emailValue];
+      //     }
+      //   }
+
+      //   if (
+      //     (!currentCandidate.phones || !currentCandidate.phones.length) &&
+      //     (!currentCandidate.emails || !currentCandidate.emails.length)
+      //   ) {
+      //     const noContactsWarning = document.querySelector(
+      //       ".no-contacts-on-page"
+      //     );
+      //     noContactsWarning.classList.remove("hide");
+      //     highlightInput();
+      //   }
+
+      //   const select = document.querySelector(".ats-destination-select");
+      //   const notPicked = document.querySelector("#destinationNotPicked");
+      //   select.addEventListener("change", () => {
+      //     notPicked.classList.add("hide");
+      //   });
+
+      //   await patchSelectWithProjects(select);
+
+      //   const candidateForm = document.querySelector(".candidate-form");
+      //   candidateForm.addEventListener("submit", async (event) => {
+      //     event.preventDefault();
+      //     sendSubmitRequestMessage();
+      //   });
+      //   onCandidateFound();
+      // }
     }
   }
 
@@ -318,18 +438,12 @@
       highlightInput();
     }
 
-    if (
-      !!formValue["candidate-emails"] &&
-      !EMAIL_PATTERN.test(formValue["candidate-emails"])
-    ) {
+    if (!!formValue["candidate-emails"] && !EMAIL_PATTERN.test(formValue["candidate-emails"])) {
       hasCandidateEmailError = true;
       incorrectEmail.classList.remove("hide");
     }
 
-    if (
-      !!formValue["candidate-phones"] &&
-      !PHONE_PATTERN.test(cleanedUpPhoneValue(formValue["candidate-phones"]))
-    ) {
+    if (!!formValue["candidate-phones"] && !PHONE_PATTERN.test(cleanedUpPhoneValue(formValue["candidate-phones"]))) {
       hasCandidatePhoneError = true;
       incorrectPhone.classList.remove("hide");
     }
@@ -346,38 +460,15 @@
       noContactsWarning.classList.add("hide");
     }
 
-    if (
-      hasNoContactsError ||
-      hasCandidateEmailError ||
-      hasCandidatePhoneError ||
-      hasAtsDestinationError
-    ) {
+    if (hasNoContactsError || hasCandidateEmailError || hasCandidatePhoneError || hasAtsDestinationError) {
       return;
     }
 
-    const submitInput = {
-      // source field will depend on current url match
-      // add it when new integration will be implemented
-      source: "Work",
-      id: currentResumeId,
-      text: currentCandidate.text,
-      fullName: formValue["candidate-name"]?.length
-        ? formValue["candidate-name"]
-        : null,
-      phones: [cleanedUpPhoneValue(formValue["candidate-phones"])],
-      emails: [formValue["candidate-emails"]],
-      ...(formValue["ats-destination"] === "db"
-        ? {}
-        : { projectId: formValue["ats-destination"] }),
-    };
+    const submitInput = getInputForCandidateImport(formValue);
 
     const cta = document.querySelector(".add-candidate-cta");
     cta.classList.add("processing");
-    const result = await utils.addCandidate(
-      { ...submitInput },
-      utils.getEnvQueryParam(document.location.href),
-      token
-    );
+    const result = await utils.addCandidate({ ...submitInput }, utils.getEnvQueryParam(document.location.href), token);
 
     if (!result?.ok && (result?.status === 403 || result?.status === 401)) {
       hasAtsAccess = false;
@@ -393,7 +484,7 @@
 
     if (!!result && result instanceof Object) {
       const nameContainer = document.querySelector(".added-candidate-name");
-      nameContainer.innerHTML = result.parsedResume?.fullName;
+      nameContainer.innerHTML = result.candidate?.fullName;
       const goToCandidate = document.querySelector(".go-to-candidate-link");
       goToCandidate.href = result.candidate?.url;
       const successBlock = document.querySelector(".add-success");
@@ -429,8 +520,7 @@
           const projectName = document.createElement("div");
           projectName.innerHTML = item.name;
           const projectAdditionalInfo = document.createElement("div");
-          projectAdditionalInfo.innerHTML =
-            ", " + item.cityName + (isMain ? ", " + item.ownerName : "");
+          projectAdditionalInfo.innerHTML = ", " + item.cityName + (isMain ? ", " + item.ownerName : "");
           optionInfo.classList.add("select-project-option-item");
           optionInfo.appendChild(projectName);
           optionInfo.appendChild(projectAdditionalInfo);
@@ -497,25 +587,19 @@
 
   function phonesInResume(el) {
     const phonePossibleWordOptions = ["телефон", "phone"];
-    return phonePossibleWordOptions.find((word) =>
-      el.text.toLowerCase().includes(word)
-    );
+    return phonePossibleWordOptions.find((word) => el.text.toLowerCase().includes(word));
   }
 
   function emailsInResume(el) {
     const emailPossibleWordOptions = ["пошта", "почта", "email"];
-    return emailPossibleWordOptions.find((word) =>
-      el.text.toLowerCase().includes(word)
-    );
+    return emailPossibleWordOptions.find((word) => el.text.toLowerCase().includes(word));
   }
 
   const getCandidateInfo = (element = resumeContainer) => {
     if (element && element instanceof HTMLElement) {
       const data = {
         tag: element.tagName.toLowerCase(),
-        text: element.innerText
-          ? element.innerText.replace(/\t|\s{3,}/gm, "  ").trim()
-          : "",
+        text: element.innerText ? element.innerText.replace(/\t|\s{3,}/gm, "  ").trim() : "",
         children: [],
       };
 
@@ -535,5 +619,121 @@
       }
       return data;
     }
+  };
+
+  const prefillCandidateNameValue = (name) => {
+    if (name && currentCandidate.name !== name) {
+      currentCandidate.name = name;
+      const candidateName = document.querySelector("#candidateInfoName");
+      if (candidateName && candidateName instanceof HTMLInputElement) {
+        candidateName.value = name;
+      }
+    }
+  };
+
+  const patchPhoneInputValue = () => {
+    const container = document.querySelector('[data-testid="phones-container"]');
+    const phoneLink = document.querySelector('a[data-testid="contact-phone"]');
+    const noContactsWarning = document.querySelector(".no-contacts-on-page");
+    if (phoneLink) {
+      const phoneNumber = phoneLink.innerText;
+      noContactsWarning.classList.add("hide");
+      prefillCandidatePhoneValue(phoneNumber);
+    } else {
+      const callback = function (mutationsList, observer) {
+        for (const mutation of mutationsList) {
+          if (mutation.type === "childList" && mutation.addedNodes.length) {
+            const phoneLinkAfterMutation = mutation.addedNodes[0].querySelector('a[data-testid="contact-phone"]');
+            if (phoneLinkAfterMutation) {
+              const phoneNumber = phoneLinkAfterMutation.innerText;
+              noContactsWarning.classList.add("hide");
+              prefillCandidatePhoneValue(phoneNumber);
+              observer.disconnect();
+            }
+          }
+        }
+      };
+      const observer = new MutationObserver(callback);
+      const config = {
+        childList: true,
+        subtree: true,
+      };
+      observer.observe(container, config);
+    }
+  };
+
+  const prefillCandidatePhoneValue = (phoneNumber) => {
+    const phoneInput = document.querySelector("#candidateInfoPhone");
+    if (phoneInput && phoneInput instanceof HTMLInputElement) {
+      phoneInput.value = phoneNumber;
+    }
+    currentCandidate.phones = [phoneNumber];
+  };
+
+  const prefillCandidateEmailValue = (email) => {
+    const emailInput = document.querySelector("#candidateInfoEmail");
+    if (emailInput && emailInput instanceof HTMLInputElement) {
+      emailInput.value = email;
+    }
+    currentCandidate.emails = [email];
+  };
+
+  const extractEmails = (text) => {
+    const multiLineEmail = new RegExp(EMAIL_PATTERN, "gm");
+    const multiLinePhone = new RegExp(PHONE_PATTERN, "gm");
+    console.log(text.match(multiLineEmail));
+    console.log(text.match(multiLinePhone));
+    return text.match(multiLineEmail);
+    // return text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi);
+  };
+
+  const getInputForCandidateImport = (formValue) => {
+    const baseInput = {
+      id: currentResumeId,
+      text: currentCandidate.text ?? "",
+      fullName: formValue["candidate-name"]?.length ? formValue["candidate-name"] : null,
+      phones: [cleanedUpPhoneValue(formValue["candidate-phones"])],
+      emails: [formValue["candidate-emails"]],
+      ...(formValue["ats-destination"] === "db" ? {} : { projectId: formValue["ats-destination"] }),
+    };
+    console.log(baseInput);
+
+    if (workUrlMatch) {
+      const source = "Work";
+      return { ...baseInput, source };
+    }
+    if (olxResumeUrlMatch || olxApplyUrlMatch) {
+      const source = "Olx";
+      const externalUrl = currentUrl;
+      return { ...baseInput, source, externalUrl };
+    }
+  };
+
+  const prefillFormWithApplyInfo = () => {
+    prefillCandidateNameValue(getOlxApplyApplicantName());
+    const contactInfoContainer = document.querySelector(
+      'article[data-testid="application-details"] div section dl[data-testid="profile-asic-info-grid"]'
+    );
+    const childrenArray = Array.from(contactInfoContainer?.children ?? []);
+    const possiblePhoneWords = ["Номер телефону", "Номер телефона"];
+    const possibleEmailWords = ["Электронная почта", "Електронна пошта"];
+    const phone = childrenArray.find((el) => possiblePhoneWords.includes(el.innerText))?.nextElementSibling.innerText;
+    if (typeof phone === "string" && phone !== (currentCandidate.phones ?? [])[0]) {
+      prefillCandidatePhoneValue(phone);
+    }
+    const email = childrenArray.find((el) => possibleEmailWords.includes(el.innerText))?.nextElementSibling.innerText;
+    if (typeof email === "string" && email !== (currentCandidate.emails ?? [])[0]) {
+      prefillCandidateEmailValue(email);
+    }
+    const noContactsWarning = document.querySelector(".no-contacts-on-page");
+    // (typeof phone === "string" && phone) || (typeof email === "string" && email)
+    currentCandidate.name ? noContactsWarning.classList.add("hide") : noContactsWarning.classList.remove("hide");
+  };
+
+  const getOlxApplyApplicantName = () => {
+    return (
+      document.querySelector('article[data-testid="application-details"] div div h4[data-testid="application-title"]')
+        ?.innerText ?? null
+    );
   };
 })();

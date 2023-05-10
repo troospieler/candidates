@@ -24,6 +24,12 @@ chrome.runtime.onMessage.addListener(async (message) => {
   }
 });
 
+// chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+//   if (changeInfo.url) {
+//     sendLoggingDataMessageToTab(tabId, changeInfo);
+//   }
+// });
+
 function proceedActionWithCookie(id, env, actionType) {
   const cookieSettingsByNewDomain = {
     url: `https://${env ? env + "." : ""}${NEW_DOMAIN}`,

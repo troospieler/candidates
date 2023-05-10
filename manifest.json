@@ -1,11 +1,15 @@
 {
   "name": "Helper | Кандидати",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Додавайте кандидатів до Helper напряму з інтеграцій",
   "permissions": ["storage", "tabs", "cookies"],
   "host_permissions": ["https://*.rabota.ua/*", "https://*.robota.ua/*"],
   "externally_connectable": {
-    "matches": ["https://www.work.ua/*resumes/*"],
+    "matches": [
+      "https://www.work.ua/*resumes/*",
+      "https://www.olx.ua/*obyavlenie/*",
+      "https://www.olx.ua/*myaccount/ep/ad/*"
+    ],
     "js": ["contentScript.js"]
   },
   "background": {
@@ -13,15 +17,13 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.work.ua/*resumes/*"],
-      "js": ["contentScript.js"],
-      "css": [
-        "popup.css",
-        "entrance.css",
-        "fetching-state.css",
-        "candidate-info.css",
-        "success-window.css"
+      "matches": [
+        "https://www.work.ua/*resumes/*",
+        "https://www.olx.ua/*obyavlenie/*",
+        "https://www.olx.ua/*myaccount/ep/ad/*"
       ],
+      "js": ["contentScript.js"],
+      "css": ["popup.css", "entrance.css", "fetching-state.css", "candidate-info.css", "success-window.css"],
       "match_about_blank": true
     }
   ],
@@ -32,7 +34,9 @@
         "assets/plugin-icon-big.png",
         "utils.js",
         "popup.html",
-        "candidate.css"
+        "candidate.css",
+        "olx-apply-page-helpers.js",
+        "olx-resume-page-helpers.js"
       ],
       "matches": ["<all_urls>"]
     }

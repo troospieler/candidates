@@ -29,6 +29,7 @@ export function getEnvQueryParam(url) {
 }
 
 export const checkAccess = async (token, env) => {
+  // return true
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
   myHeaders.append("Authorization", token);
@@ -64,16 +65,10 @@ export const checkAccess = async (token, env) => {
   };
 
   try {
-    const response = await fetch(
-      `https://ats-api${env ? "." + env : ""}.${DOMAIN}/graphql/`,
-      requestOptions
-    );
+    const response = await fetch(`https://ats-api${env ? "." + env : ""}.${DOMAIN}/graphql/`, requestOptions);
     if (response.ok) {
       const result = await response.json();
-      return (
-        !!result?.data?.validateCurrentUser?.user &&
-        !result?.data?.validateCurrentUser?.errors
-      );
+      return !!result?.data?.validateCurrentUser?.user && !result?.data?.validateCurrentUser?.errors;
     } else {
       if (response.status === 403) {
         return false;
@@ -83,7 +78,8 @@ export const checkAccess = async (token, env) => {
     }
   } catch (error) {
     console.log("ERROR on CHECK ACCESS", error);
-    return error;
+    return null;
+    // return error;
   }
 };
 
@@ -91,8 +87,8 @@ export const addCandidate = async (input, env, token) => {
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
   myHeaders.append("Authorization", token);
+  console.log(input);
   const raw = JSON.stringify({
-    source: "Work",
     ...input,
   });
   const requestOptions = {
@@ -101,10 +97,7 @@ export const addCandidate = async (input, env, token) => {
     body: raw,
   };
   try {
-    const response = await fetch(
-      `https://ats-api${env ? "." + env : ""}.${DOMAIN}/resume/import`,
-      requestOptions
-    );
+    const response = await fetch(`https://ats-api${env ? "." + env : ""}.${DOMAIN}/resume/import`, requestOptions);
     if (response.ok) {
       const result = await response.json();
       return result;
@@ -117,11 +110,13 @@ export const addCandidate = async (input, env, token) => {
     }
   } catch (error) {
     console.log("ERROR on ADDING CANDIDATE", error);
-    return error;
+    return null;
+    // return error;
   }
 };
 
 export async function getAtsAppearance(url, input) {
+  // return null
   const env = getEnvQueryParam(url);
   const { phones, emails, token } = input;
   const myHeaders = new Headers();
@@ -130,17 +125,12 @@ export async function getAtsAppearance(url, input) {
   myHeaders.append("Authorization", token);
 
   const getString = (arr, prefix) => {
-    return (arr ?? []).reduce(
-      (acc, item) => `${acc}${acc.length ? "&" : ""}${prefix}=${item}`,
-      ""
-    );
+    return (arr ?? []).reduce((acc, item) => `${acc}${acc.length ? "&" : ""}${prefix}=${item}`, "");
   };
 
   const emailsString = getString(emails, "emails");
   const phonesString = getString(phones, "phones");
-  const query = `?${emailsString}${
-    phonesString.length ? `&${phonesString}` : ""
-  }`;
+  const query = `?${emailsString}${phonesString.length ? `&${phonesString}` : ""}`;
 
   const requestOptions = {
     method: "GET",
@@ -148,9 +138,7 @@ export async function getAtsAppearance(url, input) {
   };
   try {
     const response = await fetch(
-      `https://ats-api${
-        env ? "." + env : ""
-      }.${DOMAIN}/candidate/connections/${query}`,
+      `https://ats-api${env ? "." + env : ""}.${DOMAIN}/candidate/connections/${query}`,
       requestOptions
     );
     if (response.ok) {

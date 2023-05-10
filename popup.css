@@ -33,6 +33,7 @@
   text-align: center;
   border: none;
   outline: none;
+  cursor: pointer;
   transition: all 0.2s ease-in-out;
 }
 
@@ -157,7 +158,7 @@
 }
 
 .hide {
-  display: none;
+  display: none !important;
 }
 
 .fetching-btn-state {

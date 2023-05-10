@@ -16,6 +16,7 @@
   border: none;
   outline: none;
   transition: all 0.2s ease-in-out;
+  cursor: pointer;
 }
 
 .add-candidate-cta:hover {
@@ -59,6 +60,7 @@ option {
 .add-to-base {
   padding-top: 20px;
   position: relative;
+  display: block;
 }
 
 .add-to-base::before {
@@ -85,6 +87,7 @@ option {
   padding: 5px 10px;
   margin-top: 10px;
   border-radius: 5px;
+  height: 35px;
 }
 
 .already-in-base-notification .notificaton {

@@ -72,8 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           console.log(input);
           const loginResponse = await loginToAts(input);
           console.log(loginResponse);
-          const token =
-            loginResponse?.data?.login?.loginResult?.bearerToken ?? null;
+          const token = loginResponse?.data?.login?.loginResult?.bearerToken ?? null;
           if (token) {
             form.style.display = "none";
             // set token to localstorage if possible
@@ -96,7 +95,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   } else {
     const container = document.querySelector(".extension-container");
 
-    container.innerHTML =
-      '<div class="title">Перейдіть на сторінку резюме на бажаному ресурсі</div>';
+    container.innerHTML = '<div class="title">Перейдіть на сторінку резюме на бажаному ресурсі</div>';
   }
 });
