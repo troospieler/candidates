@@ -287,13 +287,12 @@
                 if (!!mutation.target.innerText && mutation.target.innerText !== initialValue) {
                   initialValue = mutation.target.innerText;
                 }
-               await prefillFormWithApplyInfo();
+                await prefillFormWithApplyInfo();
               }
             }
           });
           const config = {
             childList: true,
-            subtree: true, 
             characterData: true,
           };
           observer.observe(apply, config);
@@ -648,9 +647,9 @@
     if (typeof email === "string" && email !== (currentCandidate.emails ?? [])[0]) {
       prefillCandidateEmailValue(email);
 
-      // refetching projects and candidate appearance in db 
-      if(!!email || !!phone) {
-        await  patchSelectWithProjects();
+      // refetching projects and candidate appearance in db
+      if (!!email || !!phone) {
+        await patchSelectWithProjects();
       }
     }
     const noContactsWarning = document.querySelector(".no-contacts-on-page");
