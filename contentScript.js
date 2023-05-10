@@ -237,6 +237,7 @@
               currentCandidate.emails = [emailValue];
             }
           }
+          await patchSelectWithProjects();
         }
       }
       // OLX RESUME PAGE
@@ -260,6 +261,7 @@
         //check if email is being found by Adam to know if parsing email in text is needed
 
         patchPhoneInputValue();
+        await patchSelectWithProjects();
 
         // uncomment if open phone action should be applied on plugin open
         // const button = document.querySelector('[data-testid="show-phone"]');
@@ -268,10 +270,10 @@
 
       // OLX APPLY PAGE
       if (olxApplyUrlMatch) {
-        prefillFormWithApplyInfo();
+        await prefillFormWithApplyInfo();
         const apply = document.querySelector('article[data-testid="application-details"]');
         if (apply) {
-          const observer = new MutationObserver((mutationsList) => {
+          const observer = new MutationObserver(async (mutationsList) => {
             let initialValue = "";
             const possiblePhoneWords = ["Номер телефону", "Номер телефона"];
             const possibleEmailWords = ["Электронная почта", "Електронна пошта"];
@@ -285,15 +287,14 @@
                 if (!!mutation.target.innerText && mutation.target.innerText !== initialValue) {
                   initialValue = mutation.target.innerText;
                 }
-                prefillFormWithApplyInfo();
+               await prefillFormWithApplyInfo();
               }
             }
           });
           const config = {
             childList: true,
-            subtree: true,
+            subtree: true, 
             characterData: true,
-            // attributes: true,
           };
           observer.observe(apply, config);
         }
@@ -314,92 +315,12 @@
         notPicked.classList.add("hide");
       });
 
-      await patchSelectWithProjects(select);
-
       const candidateForm = document.querySelector(".candidate-form");
       candidateForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         sendSubmitRequestMessage();
       });
       onCandidateFound();
-      // resumeContainer = getResumeContainerByCurrentUrlMatch(resumeId)
-      // const resume = getCandidateInfo(resumeContainer);
-      // if (resume) { // && !isResumeFound
-
-      //   isResumeFound = true;
-
-      //   currentCandidate = {};
-      //   currentCandidate.text = resume.text;
-
-      //   const name =
-      //     document.querySelector(`#resume_${resumeId} div.row div h1`)
-      //       ?.innerText ?? null;
-      //   if (name) {
-      //     currentCandidate.name = name;
-      //     const candidateName = document.querySelector("#candidateInfoName");
-      //     if (candidateName && candidateName instanceof HTMLInputElement) {
-      //       candidateName.value = name;
-      //     }
-      //   }
-
-      //   const contacts = resume?.children?.find(
-      //     (el) => phonesInResume(el) || emailsInResume(el)
-      //   )?.children;
-      //   if (contacts) {
-      //     const phone = contacts.find((el) => phonesInResume(el));
-      //     if (phone) {
-      //       const indexOfPhone = contacts.indexOf(phone);
-      //       const phoneNumber =
-      //         typeof indexOfPhone === "number"
-      //           ? contacts[indexOfPhone + 1].text
-      //           : null;
-      //       const phoneInput = document.querySelector("#candidateInfoPhone");
-      //       if (phoneInput && phoneInput instanceof HTMLInputElement) {
-      //         phoneInput.value = phoneNumber;
-      //       }
-      //       currentCandidate.phones = [phoneNumber];
-      //     }
-      //     const email = contacts.find((el) => emailsInResume(el));
-      //     if (email) {
-      //       const indexOfEmail = contacts.indexOf(email);
-      //       const emailValue =
-      //         typeof indexOfEmail === "number"
-      //           ? contacts[indexOfEmail + 1].text
-      //           : null;
-      //       const emailInput = document.querySelector("#candidateInfoEmail");
-      //       if (emailInput && emailInput instanceof HTMLInputElement) {
-      //         emailInput.value = emailValue;
-      //       }
-      //       currentCandidate.emails = [emailValue];
-      //     }
-      //   }
-
-      //   if (
-      //     (!currentCandidate.phones || !currentCandidate.phones.length) &&
-      //     (!currentCandidate.emails || !currentCandidate.emails.length)
-      //   ) {
-      //     const noContactsWarning = document.querySelector(
-      //       ".no-contacts-on-page"
-      //     );
-      //     noContactsWarning.classList.remove("hide");
-      //     highlightInput();
-      //   }
-
-      //   const select = document.querySelector(".ats-destination-select");
-      //   const notPicked = document.querySelector("#destinationNotPicked");
-      //   select.addEventListener("change", () => {
-      //     notPicked.classList.add("hide");
-      //   });
-
-      //   await patchSelectWithProjects(select);
-
-      //   const candidateForm = document.querySelector(".candidate-form");
-      //   candidateForm.addEventListener("submit", async (event) => {
-      //     event.preventDefault();
-      //     sendSubmitRequestMessage();
-      //   });
-      //   onCandidateFound();
-      // }
     }
   }
 
@@ -498,20 +419,26 @@
     cta.classList.remove("processing");
   }
 
-  async function patchSelectWithProjects(selectItem) {
+  async function patchSelectWithProjects() {
     const appearance = await utils.getAtsAppearance(document.location.href, {
       token,
       phones: currentCandidate.phones,
       emails: currentCandidate.emails,
     });
     if (appearance instanceof Object && !!appearance && !!appearance.projects) {
+      const selectItem = document.querySelector(".ats-destination-select");
+      const inBase = document.querySelector(".already-in-base-notification");
       if (appearance.isExistsInCandidatesDatabase) {
-        const inBase = document.querySelector(".already-in-base-notification");
         inBase.classList.remove("hide");
         const link = document.querySelector(".ats-in-base-link");
         link.href = appearance.candidateInDatabaseUrl;
+      } else {
+        inBase.classList.add("hide");
       }
       if (Array.isArray(appearance.projects)) {
+        // leaving default options only
+        selectItem.length = 3;
+        // patching with projects
         appearance.projects.forEach((item) => {
           const option = document.createElement("option");
           option.value = item.id;
@@ -533,17 +460,12 @@
 
   function listenToClose() {
     const closeBtn = document.querySelector(".close-on-success-btn");
-    const select = document.querySelector(".ats-destination-select");
     closeBtn.addEventListener("click", async () => {
       hideSuccess();
       triggerAppearance();
       if (!isInDataBase) {
         isInDataBase = true;
-        const selectOptions = select.options;
-        for (let i = selectOptions.length - 1; i >= 3; i--) {
-          selectOptions[i].remove();
-        }
-        await patchSelectWithProjects(select);
+        await patchSelectWithProjects();
       }
     });
   }
@@ -641,7 +563,7 @@
         noContactsWarning.classList.add("hide");
         prefillCandidatePhoneValue(phoneNumber);
       } else {
-        const callback = function (mutationsList, observer) {
+        const callback = async function (mutationsList, observer) {
           for (const mutation of mutationsList) {
             if (mutation.type === "childList" && mutation.addedNodes.length) {
               const phoneLinkAfterMutation = mutation.addedNodes[0].querySelector('a[data-testid="contact-phone"]');
@@ -649,6 +571,7 @@
                 const phoneNumber = phoneLinkAfterMutation.innerText;
                 noContactsWarning.classList.add("hide");
                 prefillCandidatePhoneValue(phoneNumber);
+                await patchSelectWithProjects();
                 observer.disconnect();
               }
             }
@@ -697,7 +620,6 @@
       emails: [formValue["candidate-emails"]],
       ...(formValue["ats-destination"] === "db" ? {} : { projectId: formValue["ats-destination"] }),
     };
-    console.log(baseInput);
 
     if (workUrlMatch) {
       const source = "Work";
@@ -710,7 +632,7 @@
     }
   };
 
-  const prefillFormWithApplyInfo = () => {
+  const prefillFormWithApplyInfo = async () => {
     prefillCandidateNameValue(getOlxApplyApplicantName());
     const contactInfoContainer = document.querySelector(
       'article[data-testid="application-details"] div section dl[data-testid="profile-asic-info-grid"]'
@@ -725,9 +647,13 @@
     const email = childrenArray.find((el) => possibleEmailWords.includes(el.innerText))?.nextElementSibling.innerText;
     if (typeof email === "string" && email !== (currentCandidate.emails ?? [])[0]) {
       prefillCandidateEmailValue(email);
+
+      // refetching projects and candidate appearance in db 
+      if(!!email || !!phone) {
+        await  patchSelectWithProjects();
+      }
     }
     const noContactsWarning = document.querySelector(".no-contacts-on-page");
-    // (typeof phone === "string" && phone) || (typeof email === "string" && email)
     currentCandidate.name ? noContactsWarning.classList.add("hide") : noContactsWarning.classList.remove("hide");
   };
 

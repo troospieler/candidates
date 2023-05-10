@@ -87,7 +87,6 @@ export const addCandidate = async (input, env, token) => {
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
   myHeaders.append("Authorization", token);
-  console.log(input);
   const raw = JSON.stringify({
     ...input,
   });
