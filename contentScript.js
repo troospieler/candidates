@@ -357,7 +357,7 @@
       triggerAppearance();
       if (!isInDataBase) {
         isInDataBase = true;
-        await formUtils.patchSelectWithProjects(currentCandidate.phones, currentCandidate.emails);
+        await formUtils.patchSelectWithProjects(token, currentCandidate.phones, currentCandidate.emails);
       }
     });
   }
