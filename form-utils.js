@@ -77,3 +77,17 @@ export const cleanupContactsErrorsOnCandidateChange = () => {
   // const notPicked = document.querySelector("#destinationNotPicked");
   // notPicked.classList.add("hide");
 };
+
+export const getFormItemValueByKey = (key) => {
+  return getFormValue()[key] ?? null;
+};
+
+export function getFormValue() {
+  const formElement = document.querySelector(".candidate-form");
+  const formData = new FormData(formElement);
+  const formValue = {};
+  for (var [key, value] of formData.entries()) {
+    formValue[key] = value;
+  }
+  return formValue;
+}

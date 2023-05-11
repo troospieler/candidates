@@ -121,7 +121,6 @@ export async function getAtsAppearance(url, input) {
   const env = getEnvQueryParam(url);
   const { phones, emails, token } = input;
   const myHeaders = new Headers();
-
   myHeaders.append("Content-Type", "application/json");
   myHeaders.append("Authorization", token);
 
@@ -170,13 +169,4 @@ export function parseJwt(userToken) {
       .join("")
   );
   return JSON.parse(jsonPayload);
-}
-
-export function getFormValue(formElement) {
-  const formData = new FormData(formElement);
-  const formValue = {};
-  for (var [key, value] of formData.entries()) {
-    formValue[key] = value;
-  }
-  return formValue;
 }

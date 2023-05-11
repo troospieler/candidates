@@ -183,6 +183,9 @@
     const successBlock = document.querySelector(".add-success");
     candidateInfoBlock.classList.remove("hide");
     successBlock.classList.add("hide");
+    const phone = formUtils.getFormItemValueByKey("candidate-phones");
+    const email = formUtils.getFormItemValueByKey("candidate-emails");
+    formUtils.patchSelectWithProjects(token, phone ? [phone] : null, email ? [email] : null);
   };
 
   function proceedPLuginTriggered() {
@@ -229,7 +232,6 @@
       if (olxApplyUrlMatch) {
         await olxApplyPageHelpers.onOlxApplyPageScenario(currentCandidate, token);
       }
-      console.log(currentCandidate);
 
       if (
         (!currentCandidate.phones || !currentCandidate.phones.length) &&
@@ -266,7 +268,6 @@
 
   async function sumbitCandidate() {
     const notPicked = document.querySelector("#destinationNotPicked");
-    const candidateForm = document.querySelector(".candidate-form");
     const noContactsWarning = document.querySelector(".no-contacts-on-page");
 
     hasNoContactsError = false;
@@ -276,7 +277,7 @@
 
     const incorrectEmail = document.querySelector("#incorrectEmail");
     const incorrectPhone = document.querySelector("#incorrectPhone");
-    const formValue = utils.getFormValue(candidateForm);
+    const formValue = formUtils.getFormValue();
 
     // checking validity
     if (!formValue["ats-destination"]) {
@@ -355,10 +356,6 @@
     closeBtn.addEventListener("click", async () => {
       hideSuccess();
       triggerAppearance();
-      if (!isInDataBase) {
-        isInDataBase = true;
-        await formUtils.patchSelectWithProjects(token, currentCandidate.phones, currentCandidate.emails);
-      }
     });
   }
 
