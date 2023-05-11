@@ -29,7 +29,8 @@ export function getEnvQueryParam(url) {
 }
 
 export const checkAccess = async (token, env) => {
-  // return true
+  // uncomment when test env is not available
+  // return true;
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
   myHeaders.append("Authorization", token);
@@ -115,7 +116,8 @@ export const addCandidate = async (input, env, token) => {
 };
 
 export async function getAtsAppearance(url, input) {
-  // return null
+  // uncomment when test env is not available
+  // return null;
   const env = getEnvQueryParam(url);
   const { phones, emails, token } = input;
   const myHeaders = new Headers();
@@ -150,9 +152,10 @@ export async function getAtsAppearance(url, input) {
   }
 }
 
-export const getWorkResumeContainer = (resumeId) => {
-  return document.getElementById(`resume_${resumeId}`);
-};
+export function sendCustomDocumentEvent(eventTitle, eventData) {
+  const event = new CustomEvent(eventTitle, { detail: eventData });
+  document.dispatchEvent(event);
+}
 
 export function parseJwt(userToken) {
   var base64Url = userToken.split(".")[1];

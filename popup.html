@@ -2,8 +2,8 @@
   <!-- TOP BLOCK WITH USER INFO -->
   <div class="ats-user-info hide">
     <div class="user-info-container">
-      <b class="user-company"></b>
-      <span class="user-name"></span>
+      <b class="user-company helper-font-family"></b>
+      <span class="user-name helper-font-family"></span>
     </div>
     <img
       class="close-plugin-btn"
@@ -17,7 +17,7 @@
     <div class="entrance-window-heading">
       <img width="162" height="40px" src="https://images.cf-rabota.com.ua/alliance-ats/plugin/helper-logo.png" alt="" />
       <span class="entrance-heading-separator"></span>
-      <span>Кандидати</span>
+      <span class="helper-font-family">Кандидати</span>
       <img
         class="close-on-entrance-plugin-btn"
         src="https://images.cf-rabota.com.ua/alliance-ats/plugin/close-cross.png"
@@ -26,9 +26,9 @@
         width="20"
       />
     </div>
-    <div class="helper-explanatory">Помічник з додавання кандидатів</div>
-    <div class="how-it-works">Як працює плагін?</div>
-    <div class="authorization-explanatory">
+    <div class="helper-explanatory helper-font-family">Помічник з додавання кандидатів</div>
+    <div class="how-it-works helper-font-family">Як працює плагін?</div>
+    <div class="authorization-explanatory helper-font-family">
       Авторизуйтесь як роботодавець<br />та зберігайте кандидатів із різних джерел<br />до вашої бази Helper в пару
       кліків
     </div>
@@ -38,7 +38,7 @@
         src="https://images.cf-rabota.com.ua/alliance-ats/plugin/logo-robota-white.png"
         alt="robota-logo"
       />
-      <span style="vertical-align: middle; color: white"> Увійти як роботодавець </span>
+      <span class="helper-font-family" style="vertical-align: middle; color: white"> Увійти як роботодавець </span>
     </button>
     <div class="yellow-circle"></div>
   </div>
@@ -56,24 +56,28 @@
         src="https://images.cf-rabota.com.ua/alliance-ats/plugin/rotating-elipse.png"
         alt="rotator"
       />
-      <b style="display: block; z-index: 2; position: relative">Скануємо кандидата</b>
+      <b class="helper-font-family" style="display: block; z-index: 2; position: relative">Скануємо кандидата</b>
     </div>
   </div>
 
   <!-- CANDIDATE INFO APPEARANCE -->
   <div class="candidate-info hide">
     <form class="candidate-form" action="" method="POST">
-      <div class="candidate-section-title">Дані кандидата</div>
-      <label class="input-label">Ім’я та прізвище</label>
+      <div class="candidate-section-title helper-font-family">Дані кандидата</div>
+      <label class="input-label helper-font-family">Ім’я та прізвище</label>
       <input class="input" name="candidate-name" id="candidateInfoName" type="text" />
-      <label class="input-label">Електронна пошта</label>
+      <label class="input-label helper-font-family">Електронна пошта</label>
       <input class="input" name="candidate-emails" id="candidateInfoEmail" type="text" />
-      <div id="incorrectEmail" class="not-correct-value hide">Будь ласка, перевірте формат пошти</div>
+      <div id="incorrectEmail" class="not-correct-value hide helper-font-family">
+        Будь ласка, перевірте формат пошти
+      </div>
 
       <div class="candidate-phone-container">
-        <label class="input-label">Номер телефону</label>
+        <label class="input-label helper-font-family">Номер телефону</label>
         <input class="input" name="candidate-phones" id="candidateInfoPhone" type="text" />
-        <div id="incorrectPhone" class="not-correct-value hide">Будь ласка, перевірте формат номеру</div>
+        <div id="incorrectPhone" class="not-correct-value hide helper-font-family">
+          Будь ласка, перевірте формат номеру
+        </div>
       </div>
       <!-- no contacts block -->
       <div class="no-contacts-on-page hide">
@@ -85,18 +89,22 @@
             src="https://images.cf-rabota.com.ua/alliance-ats/plugin/Icon-Chat-Alert-20.png"
             alt="exclamation"
           />
-          <span style="vertical-align: bottom"> Додайте спосіб зв’язку з кандидатом </span>
+          <span style="vertical-align: bottom" class="helper-font-family"> Додайте спосіб зв’язку з кандидатом </span>
         </div>
-        <div class="add-contacts-explanation">Перевірте, чи відкриті контакти, відкрийте їх за необхідності</div>
+        <div class="add-contacts-explanation helper-font-family">
+          Перевірте, чи відкриті контакти, відкрийте їх за необхідності
+        </div>
         <div style="width: 100%" class="or">
           <div class="or-line"></div>
-          <div class="or-text">або</div>
+          <div class="or-text helper-font-family">або</div>
           <div class="or-line"></div>
         </div>
-        <div class="add-contacts-explanation">Введіть електронну пошту чи телефон кандидата вручну</div>
+        <div class="add-contacts-explanation helper-font-family">
+          Введіть електронну пошту чи телефон кандидата вручну
+        </div>
       </div>
 
-      <label class="candidate-section-title add-to-base">Додати до бази кандидатів</label>
+      <label class="candidate-section-title add-to-base helper-font-family">Додати до бази кандидатів</label>
       <div class="select-container">
         <select name="ats-destination" class="ats-destination-select">
           <option value="">Не обрано</option>
@@ -105,15 +113,19 @@
         </select>
       </div>
 
-      <div id="destinationNotPicked" class="empty-value hide">Оберіть куди ви хочете додати кандидата</div>
-      <div id="errorOnAdding" class="not-correct-value hide">Сталась помилка. Будь ласка, повторіть спробу</div>
+      <div id="destinationNotPicked" class="empty-value hide helper-font-family">
+        Оберіть куди ви хочете додати кандидата
+      </div>
+      <div id="errorOnAdding" class="not-correct-value hide helper-font-family">
+        Сталась помилка. Будь ласка, повторіть спробу
+      </div>
 
       <div class="already-in-base-notification hide">
         <div class="notificaton">
           <img width="20" src="https://images.cf-rabota.com.ua/alliance-ats/plugin/success-check.png" alt="success" />
-          <span class="plugin-small-text">Кандидат є в базі Helper</span>
+          <span class="plugin-small-text helper-font-family">Кандидат є в базі Helper</span>
         </div>
-        <a class="ats-in-base-link" href="/" target="_blank">
+        <a class="ats-in-base-link helper-font-family" href="/" target="_blank">
           <img width="15" src="https://images.cf-rabota.com.ua/alliance-ats/plugin/black-eye.png" alt="link" />
         </a>
       </div>
@@ -127,7 +139,7 @@
             alt=""
           />
         </span>
-        <span style="margin-left: 10px"> Додати кандидата в Helper</span>
+        <span class="helper-font-family" style="margin-left: 10px"> Додати кандидата в Helper</span>
       </button>
     </form>
   </div>
@@ -135,16 +147,16 @@
   <!-- ADD CUCCESS WINDOW -->
 
   <div class="add-success hide">
-    <b class="added-candidate-name"></b>
+    <b class="added-candidate-name helper-font-family"></b>
     <div class="success-notification">
       <img width="20" src="https://images.cf-rabota.com.ua/alliance-ats/plugin/success-check.png" alt="success" />
-      <span>Кандидата збережено в Helper</span>
+      <span class="helper-font-family">Кандидата збережено в Helper</span>
     </div>
     <a href="/" class="go-to-candidate-link" id="loginBtn" type="submit" target="_blank">
       <img width="20" src="https://images.cf-rabota.com.ua/alliance-ats/plugin/white-eye.png" alt="img" />
-      <b>Переглянути в Helper</b>
+      <b class="helper-font-family">Переглянути в Helper</b>
     </a>
-    <button class="close-on-success-btn">Закрити</button>
+    <button class="close-on-success-btn helper-font-family">Закрити</button>
   </div>
 </div>
 

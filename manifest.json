@@ -35,8 +35,10 @@
         "utils.js",
         "popup.html",
         "candidate.css",
+        "form-utils.js",
         "olx-apply-page-helpers.js",
-        "olx-resume-page-helpers.js"
+        "olx-resume-page-helpers.js",
+        "work-resume-page-helpers.js"
       ],
       "matches": ["<all_urls>"]
     }

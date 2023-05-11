@@ -2,13 +2,12 @@
   const currentUrl = window.location.href;
 
   const workUrlMatch = currentUrl.match(/^https:\/\/www\.work\.ua(\/\w{0,})?\/resumes\/(\d+)\/?(?:\?.*)?$/);
-
   const olxResumeUrlMatch = currentUrl.match(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/obyavlenie\/\w{1,}/);
   const olxApplyUrlMatch = currentUrl.match(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/myaccount\/ep\/ad\/[\w\/]{1,}/);
-  // const olxApplyUrlMatch = currentUrl.match(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/myaccount\/ep\/ad\/\w{1,}\/\?applicationId.{1,}/);
 
-  // ADD MATCH FOR OTHER PLATFORMS
-  // NEXT IN LINE -- OLX.UA
+  // try if needed to open only on opened apply, but need to update logic
+  // cause after first page open the check might not find mathces and extension wont work after apply selected
+  // const olxApplyUrlMatch = currentUrl.match(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/myaccount\/ep\/ad\/\w{1,}\/\?applicationId.{1,}/);
 
   // prevent plugin open/functionality if not correct url
   if (!workUrlMatch && !olxResumeUrlMatch && !olxApplyUrlMatch) {
@@ -16,8 +15,6 @@
   }
 
   let currentResumeId = null;
-  let resumeContainer = null;
-  // let isResumeFound = false;
   let currentCandidate = null;
   let token = null;
   let hasNoContactsError = false;
@@ -25,16 +22,23 @@
   let hasAtsDestinationError = false;
   let hasCandidatePhoneError = false;
   let isInDataBase = false;
-  let isMain = false;
   let isPluginWindowOpen = false;
   let hasAtsAccess = true;
 
   const PHONE_PATTERN = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/;
   const EMAIL_PATTERN = /^[\w-]+[_.\-\w]*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
 
-  // get access to utils methods
+  // get access to other modules
   const utilsSrc = chrome.runtime.getURL("utils.js");
   const utils = await import(utilsSrc);
+  const formUtilsSrc = chrome.runtime.getURL("form-utils.js");
+  const formUtils = await import(formUtilsSrc);
+  const olxApplyPageHelpersSrc = chrome.runtime.getURL("olx-apply-page-helpers.js");
+  const olxApplyPageHelpers = await import(olxApplyPageHelpersSrc);
+  const olxResumePageHelpersSrc = chrome.runtime.getURL("olx-resume-page-helpers.js");
+  const olxResumePageHelpers = await import(olxResumePageHelpersSrc);
+  const workResumePageHelpersSrc = chrome.runtime.getURL("work-resume-page-helpers.js");
+  const workResumePageHelpers = await import(workResumePageHelpersSrc);
 
   //injecting popup.html to current web page
   await fetch(chrome.runtime.getURL("popup.html"))
@@ -99,7 +103,7 @@
         }
         if (type === "TRIGGER_PLUGIN") {
           triggerAppearance();
-          prefillCandidateForm(currentResumeId);
+          prefillCandidateInfo();
         }
         if (type === "ICON_CLICKED") {
           const successBlock = document.querySelector(".add-success");
@@ -113,19 +117,22 @@
           setToken(message);
           await sumbitCandidate();
         }
-        // USING FOR LOGGING DATA FROM BACKGROUND CONTEXT
+
+        // trigger currentCandidate changes events
+        document.addEventListener("formUtilsMessage", function (event) {
+          onFormUtilsMessageEvent(event.detail);
+        });
+
+        document.addEventListener("resumeChangeMessage", function (event) {
+          onResumeChangeMessageEvent(event.detail);
+        });
+
+        // USE FOR LOGGING DATA FROM BACKGROUND CONTEXT
         if (type === "LOGGING_DATA_TO_CONSOLE") {
           console.log(message);
         }
       });
 
-      // currentResumeId by url
-      if (workUrlMatch) {
-        const firstPartOfUrl = document.location.href.split("resumes/")[1];
-        currentResumeId = firstPartOfUrl.slice(0, firstPartOfUrl.indexOf("/"));
-      }
-
-      //listening for cta button click to show popup and implement logic
       const ctaBtn = document.querySelector(".cta-button");
       ctaBtn.addEventListener("click", () => {
         proceedPLuginTriggered();
@@ -188,10 +195,9 @@
       : triggerAppearance();
   }
 
-  async function prefillCandidateForm(resumeId) {
+  async function prefillCandidateInfo() {
     if (token) {
       const userInfo = utils.parseJwt(token);
-      isMain = userInfo.RoleId === "1";
       const userName = userInfo.CompanyName;
       const companyName = userInfo.UserName;
       const company = document.querySelector(".user-company");
@@ -208,96 +214,22 @@
 
     if (!currentCandidate) {
       currentCandidate = {};
+
       // SPLIT BY URL CONDITION
       // WORK RESUME PAGE
       if (workUrlMatch) {
-        resumeContainer = utils.getWorkResumeContainer(resumeId);
-        const resume = getCandidateInfo(resumeContainer);
-        if (resume) {
-          currentCandidate.text = resume.text;
-          const name = document.querySelector(`#resume_${resumeId} div.row div h1`)?.innerText ?? null;
-          prefillCandidateNameValue(name);
-
-          const contacts = resume?.children?.find((el) => phonesInResume(el) || emailsInResume(el))?.children;
-          if (contacts) {
-            const phone = contacts.find((el) => phonesInResume(el));
-            if (phone) {
-              const indexOfPhone = contacts.indexOf(phone);
-              const phoneNumber = typeof indexOfPhone === "number" ? contacts[indexOfPhone + 1].text : null;
-              prefillCandidatePhoneValue(phoneNumber);
-            }
-            const email = contacts.find((el) => emailsInResume(el));
-            if (email) {
-              const indexOfEmail = contacts.indexOf(email);
-              const emailValue = typeof indexOfEmail === "number" ? contacts[indexOfEmail + 1].text : null;
-              const emailInput = document.querySelector("#candidateInfoEmail");
-              if (emailInput && emailInput instanceof HTMLInputElement) {
-                emailInput.value = emailValue;
-              }
-              currentCandidate.emails = [emailValue];
-            }
-          }
-          await patchSelectWithProjects();
-        }
+        await workResumePageHelpers.onWorkResumePageScenario(token);
       }
       // OLX RESUME PAGE
       if (olxResumeUrlMatch) {
-        const descriptionHeaderText = "ОПИС";
-
-        const descriptionHeader = Array.from(document.querySelectorAll("h3:not([hidden])")).find((el) =>
-          el.innerText.includes(descriptionHeaderText)
-        );
-
-        if (descriptionHeader) {
-          const nextElement = descriptionHeader.nextElementSibling;
-          const textContent = nextElement ? nextElement.innerText.trim() : "";
-          currentCandidate.text = textContent;
-          extractEmails(currentCandidate.text);
-        }
-        const nameContainer = document.querySelector("a[data-testid='user-profile-link'][name='user_ads'] h4");
-        const name = nameContainer.innerText;
-        prefillCandidateNameValue(name);
-
-        //check if email is being found by Adam to know if parsing email in text is needed
-
-        patchPhoneInputValue();
-        await patchSelectWithProjects();
-
-        // uncomment if open phone action should be applied on plugin open
-        // const button = document.querySelector('[data-testid="show-phone"]');
-        // button.click()
+        await olxResumePageHelpers.onOlxResumePageScenario(currentCandidate, token);
       }
 
       // OLX APPLY PAGE
       if (olxApplyUrlMatch) {
-        await prefillFormWithApplyInfo();
-        const apply = document.querySelector('article[data-testid="application-details"]');
-        if (apply) {
-          const observer = new MutationObserver(async (mutationsList) => {
-            let initialValue = "";
-            const possiblePhoneWords = ["Номер телефону", "Номер телефона"];
-            const possibleEmailWords = ["Электронная почта", "Електронна пошта"];
-            for (const mutation of mutationsList) {
-              if (
-                (mutation.type === "childList" &&
-                  (possiblePhoneWords.find((item) => mutation.target.innerText.includes(item)) ||
-                    possibleEmailWords.find((item) => mutation.target.innerText.includes(item)))) ||
-                mutation.type === "characterData"
-              ) {
-                if (!!mutation.target.innerText && mutation.target.innerText !== initialValue) {
-                  initialValue = mutation.target.innerText;
-                }
-                await prefillFormWithApplyInfo();
-              }
-            }
-          });
-          const config = {
-            childList: true,
-            characterData: true,
-          };
-          observer.observe(apply, config);
-        }
+        await olxApplyPageHelpers.onOlxApplyPageScenario(currentCandidate, token);
       }
+      console.log(currentCandidate);
 
       if (
         (!currentCandidate.phones || !currentCandidate.phones.length) &&
@@ -325,7 +257,7 @@
 
   function sendSubmitRequestMessage() {
     const env = utils.getEnvQueryParam(document.location.href);
-    // sending message to catch it in background.js
+    // sending message to catch it in background.js and check ats accessibility
     chrome.runtime.sendMessage({
       type: "SUBMIT_REQUEST",
       env,
@@ -418,45 +350,6 @@
     cta.classList.remove("processing");
   }
 
-  async function patchSelectWithProjects() {
-    const appearance = await utils.getAtsAppearance(document.location.href, {
-      token,
-      phones: currentCandidate.phones,
-      emails: currentCandidate.emails,
-    });
-    if (appearance instanceof Object && !!appearance && !!appearance.projects) {
-      const selectItem = document.querySelector(".ats-destination-select");
-      const inBase = document.querySelector(".already-in-base-notification");
-      if (appearance.isExistsInCandidatesDatabase) {
-        inBase.classList.remove("hide");
-        const link = document.querySelector(".ats-in-base-link");
-        link.href = appearance.candidateInDatabaseUrl;
-      } else {
-        inBase.classList.add("hide");
-      }
-      if (Array.isArray(appearance.projects)) {
-        // leaving default options only
-        selectItem.length = 3;
-        // patching with projects
-        appearance.projects.forEach((item) => {
-          const option = document.createElement("option");
-          option.value = item.id;
-          option.title = item.name;
-          const optionInfo = document.createElement("div");
-          const projectName = document.createElement("div");
-          projectName.innerHTML = item.name;
-          const projectAdditionalInfo = document.createElement("div");
-          projectAdditionalInfo.innerHTML = ", " + item.cityName + (isMain ? ", " + item.ownerName : "");
-          optionInfo.classList.add("select-project-option-item");
-          optionInfo.appendChild(projectName);
-          optionInfo.appendChild(projectAdditionalInfo);
-          option.appendChild(optionInfo);
-          selectItem.add(option);
-        });
-      }
-    }
-  }
-
   function listenToClose() {
     const closeBtn = document.querySelector(".close-on-success-btn");
     closeBtn.addEventListener("click", async () => {
@@ -464,7 +357,7 @@
       triggerAppearance();
       if (!isInDataBase) {
         isInDataBase = true;
-        await patchSelectWithProjects();
+        await formUtils.patchSelectWithProjects(currentCandidate.phones, currentCandidate.emails);
       }
     });
   }
@@ -506,118 +399,17 @@
     return input.replace(/[\(\)\+\s-]/gm, "");
   }
 
-  function phonesInResume(el) {
-    const phonePossibleWordOptions = ["телефон", "phone"];
-    return phonePossibleWordOptions.find((word) => el.text.toLowerCase().includes(word));
-  }
-
-  function emailsInResume(el) {
-    const emailPossibleWordOptions = ["пошта", "почта", "email"];
-    return emailPossibleWordOptions.find((word) => el.text.toLowerCase().includes(word));
-  }
-
-  const getCandidateInfo = (element = resumeContainer) => {
-    if (element && element instanceof HTMLElement) {
-      const data = {
-        tag: element.tagName.toLowerCase(),
-        text: element.innerText ? element.innerText.replace(/\t|\s{3,}/gm, "  ").trim() : "",
-        children: [],
-      };
-
-      const attributes = element.attributes;
-
-      for (let i = 0; i < attributes.length; i++) {
-        const attribute = attributes[i];
-        data[attribute.name] = attribute.value;
-      }
-
-      const children = element.children;
-      if (children.length > 0) {
-        for (let i = 0; i < children.length; i++) {
-          const child = children[i];
-          data.children.push(getCandidateInfo(child));
-        }
-      }
-      return data;
-    }
-  };
-
-  const prefillCandidateNameValue = (name) => {
-    if (name && currentCandidate.name !== name) {
-      currentCandidate.name = name;
-      const candidateName = document.querySelector("#candidateInfoName");
-      if (candidateName && candidateName instanceof HTMLInputElement) {
-        candidateName.value = name;
-      }
-    }
-  };
-
-  const patchPhoneInputValue = () => {
-    const container = document.querySelector('[data-testid="phones-container"]');
-    if (!!container) {
-      const phoneLink = document.querySelector('a[data-testid="contact-phone"]');
-      const noContactsWarning = document.querySelector(".no-contacts-on-page");
-      if (phoneLink) {
-        const phoneNumber = phoneLink.innerText;
-        noContactsWarning.classList.add("hide");
-        prefillCandidatePhoneValue(phoneNumber);
-      } else {
-        const callback = async function (mutationsList, observer) {
-          for (const mutation of mutationsList) {
-            if (mutation.type === "childList" && mutation.addedNodes.length) {
-              const phoneLinkAfterMutation = mutation.addedNodes[0].querySelector('a[data-testid="contact-phone"]');
-              if (phoneLinkAfterMutation) {
-                const phoneNumber = phoneLinkAfterMutation.innerText;
-                noContactsWarning.classList.add("hide");
-                prefillCandidatePhoneValue(phoneNumber);
-                await patchSelectWithProjects();
-                observer.disconnect();
-              }
-            }
-          }
-        };
-        const observer = new MutationObserver(callback);
-        const config = {
-          childList: true,
-          subtree: true,
-        };
-        observer.observe(container, config);
-      }
-    }
-  };
-
-  const prefillCandidatePhoneValue = (phoneNumber) => {
-    const phoneInput = document.querySelector("#candidateInfoPhone");
-    if (phoneInput && phoneInput instanceof HTMLInputElement) {
-      phoneInput.value = phoneNumber;
-    }
-    currentCandidate.phones = [phoneNumber];
-  };
-
-  const prefillCandidateEmailValue = (email) => {
-    const emailInput = document.querySelector("#candidateInfoEmail");
-    if (emailInput && emailInput instanceof HTMLInputElement) {
-      emailInput.value = email;
-    }
-    currentCandidate.emails = [email];
-  };
-
-  // check if this is needed
-  const extractEmails = (text) => {
-    const multiLineEmail = new RegExp(EMAIL_PATTERN, "gm");
-    const multiLinePhone = new RegExp(PHONE_PATTERN, "gm");
-    return text.match(multiLineEmail);
-    // return text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi);
-  };
-
   const getInputForCandidateImport = (formValue) => {
+    const { text, resumePhotoLink, resumeTitle } = currentCandidate;
     const baseInput = {
-      id: currentResumeId,
-      text: currentCandidate.text ?? "",
       fullName: formValue["candidate-name"]?.length ? formValue["candidate-name"] : null,
       phones: [cleanedUpPhoneValue(formValue["candidate-phones"])],
       emails: [formValue["candidate-emails"]],
       ...(formValue["ats-destination"] === "db" ? {} : { projectId: formValue["ats-destination"] }),
+      ...(resumePhotoLink ? { photoUrl: resumePhotoLink } : {}),
+      ...(resumeTitle ? { position: resumeTitle } : {}),
+      ...(text ? { text } : {}),
+      ...(currentResumeId ? { id: currentResumeId } : {}),
     };
 
     if (workUrlMatch) {
@@ -626,40 +418,49 @@
     }
     if (olxResumeUrlMatch || olxApplyUrlMatch) {
       const source = "Olx";
-      const externalUrl = currentUrl;
+      const externalUrl = window.location.href;
       return { ...baseInput, source, externalUrl };
     }
   };
 
-  const prefillFormWithApplyInfo = async () => {
-    prefillCandidateNameValue(getOlxApplyApplicantName());
-    const contactInfoContainer = document.querySelector(
-      'article[data-testid="application-details"] div section dl[data-testid="profile-asic-info-grid"]'
-    );
-    const childrenArray = Array.from(contactInfoContainer?.children ?? []);
-    const possiblePhoneWords = ["Номер телефону", "Номер телефона"];
-    const possibleEmailWords = ["Электронная почта", "Електронна пошта"];
-    const phone = childrenArray.find((el) => possiblePhoneWords.includes(el.innerText))?.nextElementSibling.innerText;
-    if (typeof phone === "string" && phone !== (currentCandidate.phones ?? [])[0]) {
-      prefillCandidatePhoneValue(phone);
+  const onFormUtilsMessageEvent = (data) => {
+    if (!data) {
+      return;
     }
-    const email = childrenArray.find((el) => possibleEmailWords.includes(el.innerText))?.nextElementSibling.innerText;
-    if (typeof email === "string" && email !== (currentCandidate.emails ?? [])[0]) {
-      prefillCandidateEmailValue(email);
-
-      // refetching projects and candidate appearance in db
-      if (!!email || !!phone) {
-        await patchSelectWithProjects();
-      }
+    const { name, phones, emails } = data;
+    switch (true) {
+      case !!name:
+        if (currentCandidate?.name !== name) {
+          currentCandidate.name = name;
+        }
+        break;
+      case !!phones:
+        currentCandidate.phones = phones;
+        break;
+      case !!emails:
+        currentCandidate.emails = emails;
+        break;
     }
-    const noContactsWarning = document.querySelector(".no-contacts-on-page");
-    currentCandidate.name ? noContactsWarning.classList.add("hide") : noContactsWarning.classList.remove("hide");
   };
 
-  const getOlxApplyApplicantName = () => {
-    return (
-      document.querySelector('article[data-testid="application-details"] div div h4[data-testid="application-title"]')
-        ?.innerText ?? null
-    );
+  const onResumeChangeMessageEvent = (data) => {
+    if (!data) {
+      return;
+    }
+    const { text, resumeId, resumePhotoLink, resumeTitle } = data;
+    switch (true) {
+      case !!text:
+        currentCandidate.text = text;
+        break;
+      case !!resumeId:
+        currentResumeId = resumeId;
+        break;
+      case !!resumePhotoLink:
+        currentCandidate.resumePhotoLink = resumePhotoLink;
+        break;
+      case !!resumeTitle:
+        currentCandidate.resumeTitle = resumeTitle;
+        break;
+    }
   };
 })();

@@ -1,5 +1,8 @@
-* {
+/* * {
   box-sizing: border-box;
+} */
+
+.helper-font-family {
   font-family: Arial, Helvetica, sans-serif !important;
 }
 
@@ -35,11 +38,11 @@
   border: none;
   outline: none;
   cursor: pointer;
+  box-shadow: 0px 4px 7px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease-in-out;
 }
 
 .cta-button:hover {
-  box-shadow: 0px 4px 7px rgba(0, 0, 0, 0.2);
   transform: perspective(500px) translate3d(0, 0, 23px);
 }
 
