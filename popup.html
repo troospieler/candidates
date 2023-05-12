@@ -65,16 +65,16 @@
     <form class="candidate-form" action="" method="POST">
       <div class="candidate-section-title helper-font-family">Дані кандидата</div>
       <label class="input-label helper-font-family">Ім’я та прізвище</label>
-      <input class="input" name="candidate-name" id="candidateInfoName" type="text" />
+      <input class="input helper-font-family" name="candidate-name" id="candidateInfoName" type="text" />
       <label class="input-label helper-font-family">Електронна пошта</label>
-      <input class="input" name="candidate-emails" id="candidateInfoEmail" type="text" />
+      <input class="input helper-font-family" name="candidate-emails" id="candidateInfoEmail" type="text" />
       <div id="incorrectEmail" class="not-correct-value hide helper-font-family">
         Будь ласка, перевірте формат пошти
       </div>
 
       <div class="candidate-phone-container">
         <label class="input-label helper-font-family">Номер телефону</label>
-        <input class="input" name="candidate-phones" id="candidateInfoPhone" type="text" />
+        <input class="input helper-font-family" name="candidate-phones" id="candidateInfoPhone" type="text" />
         <div id="incorrectPhone" class="not-correct-value hide helper-font-family">
           Будь ласка, перевірте формат номеру
         </div>
@@ -106,8 +106,8 @@
 
       <label class="candidate-section-title add-to-base helper-font-family">Додати до бази кандидатів</label>
       <div class="select-container">
-        <select name="ats-destination" class="ats-destination-select">
-          <option value="">Не обрано</option>
+        <select name="ats-destination" class="ats-destination-select helper-font-family">
+          <option class="helper-font-family" value="">Не обрано</option>
           <option title="База кандидатів" id="db" value="db">База кандидатів</option>
           <option value="separator" disabled>---</option>
         </select>

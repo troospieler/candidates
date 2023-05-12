@@ -21,7 +21,6 @@
   let hasCandidateEmailError = false;
   let hasAtsDestinationError = false;
   let hasCandidatePhoneError = false;
-  let isInDataBase = false;
   let isPluginWindowOpen = false;
   let hasAtsAccess = true;
 
