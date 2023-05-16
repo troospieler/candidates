@@ -419,8 +419,8 @@
     formUtils.cleanupFormErrors();
 
     if ((!canOperate || olxResumeUrlMatch) && isPluginWindowOpen) {
-      triggerAppearance();
       hideSuccessIfOpened();
+      triggerAppearance();
       formUtils.cleanupForm();
     }
     triggerCtaButtonAvailability(canOperate);
