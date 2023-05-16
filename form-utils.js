@@ -18,12 +18,10 @@ export const prefillCandidatePhoneValue = (phoneNumber) => {
 };
 
 export const prefillCandidateNameValue = (name) => {
-  if (typeof name === "string") {
-    const candidateName = document.querySelector("#candidateInfoName");
-    if (candidateName && candidateName instanceof HTMLInputElement) {
-      candidateName.value = name;
-      utils.sendCustomDocumentEvent("formUtilsMessage", { name });
-    }
+  const candidateName = document.querySelector("#candidateInfoName");
+  if (candidateName && candidateName instanceof HTMLInputElement) {
+    candidateName.value = name;
+    utils.sendCustomDocumentEvent("formUtilsMessage", { name });
   }
 };
 
@@ -68,19 +66,23 @@ export async function patchSelectWithProjects(token, phones = null, emails = nul
   }
 }
 
-export const cleanupContactsErrorsOnCandidateChange = () => {
+export function cleanupFormErrors() {
   const incorrectEmail = document.querySelector("#incorrectEmail");
   const incorrectPhone = document.querySelector("#incorrectPhone");
-  incorrectEmail.classList.add("hide");
-  incorrectPhone.classList.add("hide");
+  const noContactsFound = document.querySelector(".no-contacts-on-page");
+  const inBase = document.querySelector(".already-in-base-notification");
+  incorrectEmail?.classList?.add("hide");
+  incorrectPhone?.classList?.add("hide");
+  noContactsFound?.classList?.add("hide");
+  inBase?.classList?.add("hide");
   // if will be needed to hide info about not picked destination
   // const notPicked = document.querySelector("#destinationNotPicked");
   // notPicked.classList.add("hide");
-};
+}
 
-export const getFormItemValueByKey = (key) => {
+export function getFormItemValueByKey(key) {
   return getFormValue()[key] ?? null;
-};
+}
 
 export function getFormValue() {
   const formElement = document.querySelector(".candidate-form");
@@ -90,4 +92,11 @@ export function getFormValue() {
     formValue[key] = value;
   }
   return formValue;
+}
+
+export function cleanupForm() {
+  prefillCandidateEmailValue(null);
+  prefillCandidatePhoneValue(null);
+  prefillCandidateNameValue(null);
+  cleanupFormErrors();
 }

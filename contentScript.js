@@ -1,18 +1,22 @@
 (async () => {
   const currentUrl = window.location.href;
-
-  const workUrlMatch = currentUrl.match(/^https:\/\/www\.work\.ua(\/\w{0,})?\/resumes\/(\d+)\/?(?:\?.*)?$/);
-  const olxResumeUrlMatch = currentUrl.match(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/obyavlenie\/\w{1,}/);
-  const olxApplyUrlMatch = currentUrl.match(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/myaccount\/ep\/ad\/[\w\/]{1,}/);
+  const workUrlMatchPattern = new RegExp(/^https:\/\/www\.work\.ua(\/\w{0,})?\/resumes\/(\d+)\/?(?:\?.*)?$/);
+  let workUrlMatch = currentUrl.match(workUrlMatchPattern);
+  const olxResumeUrlMatchPattern = new RegExp(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/obyavlenie\/\w{1,}/);
+  let olxResumeUrlMatch = currentUrl.match(olxResumeUrlMatchPattern);
+  const olxApplyUrlMatchPattern = new RegExp(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/myaccount\/ep\/ad\/[\w\/]{1,}/);
+  let olxApplyUrlMatch = currentUrl.match(olxApplyUrlMatchPattern);
 
   // try if needed to open only on opened apply, but need to update logic
   // cause after first page open the check might not find mathces and extension wont work after apply selected
   // const olxApplyUrlMatch = currentUrl.match(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/myaccount\/ep\/ad\/\w{1,}\/\?applicationId.{1,}/);
 
-  // prevent plugin open/functionality if not correct url
-  if (!workUrlMatch && !olxResumeUrlMatch && !olxApplyUrlMatch) {
-    return;
-  }
+  // // prevent plugin open/functionality if not correct url
+  // if (!workUrlMatch && !olxResumeUrlMatch && !olxApplyUrlMatch) {
+  //   const ctaBtn = document.querySelector(".cta-button");
+  //   ctaBtn.classList.add("always-hidden");
+  //   // return;
+  // }
 
   let currentResumeId = null;
   let currentCandidate = null;
@@ -23,6 +27,7 @@
   let hasCandidatePhoneError = false;
   let isPluginWindowOpen = false;
   let hasAtsAccess = true;
+  let canOperate = false;
 
   const PHONE_PATTERN = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/;
   const EMAIL_PATTERN = /^[\w-]+[_.\-\w]*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
@@ -52,6 +57,7 @@
       wrapper.classList.add("plugin-window-wrapper");
       wrapper.innerHTML = html;
       document.body.appendChild(wrapper);
+      updateByCurrentLocationScenario(currentUrl);
 
       // get reference to all 5 states of plugin
       const entranceWindowBlock = document.querySelector(".entrance-window");
@@ -109,12 +115,17 @@
           if (!successBlock.classList.contains("hide") && isPluginWindowOpen) {
             hideSuccess();
           }
-          proceedPLuginTriggered();
+          if (canOperate) {
+            proceedPLuginTriggered();
+          }
         }
 
         if (type === "READY_TO_SUBMIT") {
           setToken(message);
           await sumbitCandidate();
+        }
+        if (type === "URL_CHANGED") {
+          onUrlChanged(message);
         }
 
         // trigger currentCandidate changes events
@@ -157,25 +168,19 @@
     .catch((error) => console.error(error));
 
   // changing view ==> hide cta and show plugin / show cta and hide plugin
-  const triggerAppearance = () => {
+  function triggerAppearance() {
     isPluginWindowOpen = !isPluginWindowOpen;
     const ctaBtn = document.querySelector(".cta-button");
     const pluginWindow = document.querySelector(".plugin-window");
 
-    ctaBtn.classList.toggle("hide");
-    pluginWindow.classList.toggle("hide");
+    ctaBtn?.classList?.toggle("hide");
+    pluginWindow?.classList?.toggle("hide");
 
     // delete animation from cta button on plugin window open
     if (!isPluginWindowOpen) {
       ctaBtn.classList.remove("fetching-btn-state");
     }
-
-    // corner case if plugin was opened on olx apply page before apply info was rendered in view
-    // changing currentCandidate to null so that form prefilling will be triggered again
-    if (!isPluginWindowOpen && !currentCandidate?.name) {
-      currentCandidate = null;
-    }
-  };
+  }
 
   const hideSuccess = () => {
     const candidateInfoBlock = document.querySelector(".candidate-info");
@@ -395,6 +400,33 @@
     return input.replace(/[\(\)\+\s-]/gm, "");
   }
 
+  function onUrlChanged(message) {
+    updateByCurrentLocationScenario(message.url);
+  }
+
+  function triggerCtaButtonAvailability(canShow) {
+    const ctaBtn = document.querySelector(".cta-button");
+    if (ctaBtn) {
+      console.log("changing cta view because ", { canShow });
+      canShow ? ctaBtn.classList.remove("always-hidden") : ctaBtn.classList.add("always-hidden");
+    }
+  }
+
+  function updateByCurrentLocationScenario(url) {
+    currentCandidate = null;
+    workUrlMatch = url.match(workUrlMatchPattern);
+    olxResumeUrlMatch = url.match(olxResumeUrlMatchPattern);
+    olxApplyUrlMatch = url.match(olxApplyUrlMatchPattern);
+    canOperate = !!workUrlMatch || !!olxResumeUrlMatch || !!olxApplyUrlMatch;
+    formUtils.cleanupFormErrors();
+
+    if (!canOperate && isPluginWindowOpen) {
+      triggerAppearance();
+      formUtils.cleanupForm();
+    }
+    triggerCtaButtonAvailability(canOperate);
+  }
+
   const getInputForCandidateImport = (formValue) => {
     const { text, resumePhotoLink, resumeTitle } = currentCandidate;
     const baseInput = {
@@ -420,15 +452,13 @@
   };
 
   const onFormUtilsMessageEvent = (data) => {
-    if (!data) {
+    if (!data || !currentCandidate) {
       return;
     }
     const { name, phones, emails } = data;
     switch (true) {
       case !!name:
-        if (currentCandidate?.name !== name) {
-          currentCandidate.name = name;
-        }
+        currentCandidate.name = name;
         break;
       case !!phones:
         currentCandidate.phones = phones;
@@ -440,7 +470,7 @@
   };
 
   const onResumeChangeMessageEvent = (data) => {
-    if (!data) {
+    if (!data || !currentCandidate) {
       return;
     }
     const { text, resumeId, resumePhotoLink, resumeTitle } = data;

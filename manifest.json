@@ -5,11 +5,7 @@
   "permissions": ["storage", "tabs", "cookies"],
   "host_permissions": ["https://*.rabota.ua/*", "https://*.robota.ua/*"],
   "externally_connectable": {
-    "matches": [
-      "https://www.work.ua/*resumes/*",
-      "https://www.olx.ua/*obyavlenie/*",
-      "https://www.olx.ua/*myaccount/ep/ad/*"
-    ],
+    "matches": ["https://www.work.ua/*resumes/*", "https://www.olx.ua/*"],
     "js": ["contentScript.js"]
   },
   "background": {
@@ -17,11 +13,7 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://www.work.ua/*resumes/*",
-        "https://www.olx.ua/*obyavlenie/*",
-        "https://www.olx.ua/*myaccount/ep/ad/*"
-      ],
+      "matches": ["https://www.work.ua/*resumes/*", "https://www.olx.ua/*"],
       "js": ["contentScript.js"],
       "css": ["popup.css", "entrance.css", "fetching-state.css", "candidate-info.css", "success-window.css"],
       "match_about_blank": true

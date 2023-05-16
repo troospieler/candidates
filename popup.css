@@ -165,6 +165,10 @@
   display: none !important;
 }
 
+.always-hidden {
+  display: none !important;
+}
+
 .fetching-btn-state {
   animation: scale 2s linear infinite;
 }

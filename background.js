@@ -24,11 +24,14 @@ chrome.runtime.onMessage.addListener(async (message) => {
   }
 });
 
-// chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-//   if (changeInfo.url) {
-//     sendLoggingDataMessageToTab(tabId, changeInfo);
-//   }
-// });
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  if (changeInfo.url) {
+    chrome.tabs.sendMessage(tabId, {
+      type: "URL_CHANGED",
+      url: changeInfo.url,
+    });
+  }
+});
 
 function proceedActionWithCookie(id, env, actionType) {
   const cookieSettingsByNewDomain = {

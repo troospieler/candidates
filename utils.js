@@ -2,6 +2,8 @@
 // consider moving getTab() logic to popup.js
 // and maybe move getAllTabs() logic to popup.js too
 
+let lastPhone = null;
+let lastEmail = null;
 // export const DOMAIN = "robota.ua";
 export const DOMAIN = "rabota.ua";
 
@@ -120,6 +122,11 @@ export async function getAtsAppearance(url, input) {
   // return null;
   const env = getEnvQueryParam(url);
   const { phones, emails, token } = input;
+  if ((phones ?? [])[0] === lastPhone && (emails ?? [])[0] === lastEmail) {
+    return;
+  }
+  lastPhone = (phones ?? [])[0] ?? null;
+  lastEmail = (emails ?? [])[0] ?? null;
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
   myHeaders.append("Authorization", token);
