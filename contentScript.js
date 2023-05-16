@@ -28,6 +28,7 @@
   let isPluginWindowOpen = false;
   let hasAtsAccess = true;
   let canOperate = false;
+  let shouldRefresh = false;
 
   const PHONE_PATTERN = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/;
   const EMAIL_PATTERN = /^[\w-]+[_.\-\w]*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
@@ -71,6 +72,13 @@
         const env = utils.getEnvQueryParam(document.location.href);
         window.open(`https://helper.${env ? env + "." : ""}${utils.DOMAIN}/login`);
         triggerAppearance();
+      });
+
+      // listen to form submit
+      const candidateForm = document.querySelector(".candidate-form");
+      candidateForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        sendSubmitRequestMessage();
       });
 
       chrome.runtime.onMessage.addListener(async (message) => {
@@ -191,6 +199,11 @@
     const phone = formUtils.getFormItemValueByKey("candidate-phones");
     const email = formUtils.getFormItemValueByKey("candidate-emails");
     formUtils.patchSelectWithProjects(token, phone ? [phone] : null, email ? [email] : null);
+
+    // add condition for resetting after success closed on olxResumeUrlMatch
+    if (!!olxResumeUrlMatch) {
+      shouldRefresh = true;
+    }
   };
 
   function proceedPLuginTriggered() {
@@ -253,11 +266,6 @@
         notPicked.classList.add("hide");
       });
 
-      const candidateForm = document.querySelector(".candidate-form");
-      candidateForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        sendSubmitRequestMessage();
-      });
       onCandidateFound();
     }
   }
@@ -421,7 +429,7 @@
     canOperate = !!workUrlMatch || !!olxResumeUrlMatch || !!olxApplyUrlMatch;
     formUtils.cleanupFormErrors();
 
-    if ((!canOperate || olxResumeUrlMatch) && isPluginWindowOpen) {
+    if (((!canOperate || olxResumeUrlMatch) && isPluginWindowOpen) || shouldRefresh) {
       const successBlock = document.querySelector(".add-success");
       if (!successBlock.classList.contains("hide")) {
         successBlock.classList.add("hide");
@@ -429,6 +437,7 @@
       triggerAppearance();
       formUtils.cleanupForm();
       currentCandidate = null;
+      shouldRefresh = false;
     }
     triggerCtaButtonAvailability(canOperate);
   }
