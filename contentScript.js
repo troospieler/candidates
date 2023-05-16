@@ -1,5 +1,5 @@
 (async () => {
-  const currentUrl = window.location.href;
+  let currentUrl = window.location.href;
   const workUrlMatchPattern = new RegExp(/^https:\/\/www\.work\.ua(\/\w{0,})?\/resumes\/(\d+)\/?(?:\?.*)?$/);
   let workUrlMatch = currentUrl.match(workUrlMatchPattern);
   const olxResumeUrlMatchPattern = new RegExp(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/obyavlenie\/[\w\/]{1,}/);
@@ -421,7 +421,7 @@
     canOperate = !!workUrlMatch || !!olxResumeUrlMatch || !!olxApplyUrlMatch;
     formUtils.cleanupFormErrors();
 
-    if (!canOperate && isPluginWindowOpen) {
+    if ((!canOperate || olxResumeUrlMatch) && isPluginWindowOpen) {
       triggerAppearance();
       formUtils.cleanupForm();
     }
