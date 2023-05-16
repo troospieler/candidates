@@ -422,6 +422,10 @@
     formUtils.cleanupFormErrors();
 
     if ((!canOperate || olxResumeUrlMatch) && isPluginWindowOpen) {
+      const successBlock = document.querySelector(".add-success");
+      if (!successBlock.classList.contains("hide")) {
+        successBlock.classList.add("hide");
+      }
       triggerAppearance();
       formUtils.cleanupForm();
     }
