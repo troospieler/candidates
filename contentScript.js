@@ -188,6 +188,10 @@
     // delete animation from cta button on plugin window open
     if (!isPluginWindowOpen) {
       ctaBtn.classList.remove("fetching-btn-state");
+      // add condition for resetting after window closed
+      if (!!olxResumeUrlMatch) {
+        shouldRefresh = true;
+      }
     }
   }
 
@@ -199,11 +203,6 @@
     const phone = formUtils.getFormItemValueByKey("candidate-phones");
     const email = formUtils.getFormItemValueByKey("candidate-emails");
     formUtils.patchSelectWithProjects(token, phone ? [phone] : null, email ? [email] : null);
-
-    // add condition for resetting after success closed on olxResumeUrlMatch
-    if (!!olxResumeUrlMatch) {
-      shouldRefresh = true;
-    }
   };
 
   function proceedPLuginTriggered() {
