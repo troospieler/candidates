@@ -111,10 +111,7 @@
           prefillCandidateInfo();
         }
         if (type === "ICON_CLICKED") {
-          const successBlock = document.querySelector(".add-success");
-          if (!successBlock.classList.contains("hide") && isPluginWindowOpen) {
-            hideSuccess();
-          }
+          hideSuccessIfOpened();
           if (canOperate) {
             proceedPLuginTriggered();
           }
@@ -423,9 +420,17 @@
 
     if ((!canOperate || olxResumeUrlMatch) && isPluginWindowOpen) {
       triggerAppearance();
+      hideSuccessIfOpened();
       formUtils.cleanupForm();
     }
     triggerCtaButtonAvailability(canOperate);
+  }
+
+  function hideSuccessIfOpened() {
+    const successBlock = document.querySelector(".add-success");
+    if (!successBlock.classList.contains("hide") && isPluginWindowOpen) {
+      hideSuccess();
+    }
   }
 
   const getInputForCandidateImport = (formValue) => {
