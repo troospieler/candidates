@@ -434,7 +434,7 @@
   }
 
   const getInputForCandidateImport = (formValue) => {
-    const { text, resumePhotoLink, resumeTitle } = currentCandidate;
+    const { text, resumePhotoLink, resumeTitle } = currentCandidate ?? {};
     const baseInput = {
       fullName: formValue["candidate-name"]?.length ? formValue["candidate-name"] : null,
       phones: [cleanedUpPhoneValue(formValue["candidate-phones"])],
