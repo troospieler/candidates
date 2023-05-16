@@ -1,6 +1,6 @@
 {
   "name": "Helper | Кандидати",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Додавайте кандидатів до Helper напряму з інтеграцій",
   "permissions": ["storage", "tabs", "cookies"],
   "host_permissions": ["https://*.rabota.ua/*", "https://*.robota.ua/*"],
