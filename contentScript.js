@@ -126,6 +126,7 @@
         }
         if (type === "URL_CHANGED") {
           onUrlChanged(message);
+          console.log(message);
         }
 
         // trigger currentCandidate changes events

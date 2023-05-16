@@ -2,8 +2,8 @@
 // consider moving getTab() logic to popup.js
 // and maybe move getAllTabs() logic to popup.js too
 
-let lastPhone = null;
-let lastEmail = null;
+let lastPhone = "";
+let lastEmail = "";
 // export const DOMAIN = "robota.ua";
 export const DOMAIN = "rabota.ua";
 
@@ -120,6 +120,7 @@ export const addCandidate = async (input, env, token) => {
 export async function getAtsAppearance(url, input) {
   // uncomment when test env is not available
   // return null;
+
   const env = getEnvQueryParam(url);
   const { phones, emails, token } = input;
   if ((phones ?? [])[0] === lastPhone && (emails ?? [])[0] === lastEmail) {
