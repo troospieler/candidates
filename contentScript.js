@@ -414,7 +414,7 @@
   }
 
   function updateByCurrentLocationScenario(url) {
-    currentCandidate = null;
+    // currentCandidate = null;
     workUrlMatch = url.match(workUrlMatchPattern);
     olxResumeUrlMatch = url.match(olxResumeUrlMatchPattern);
     olxApplyUrlMatch = url.match(olxApplyUrlMatchPattern);
@@ -428,6 +428,7 @@
       }
       triggerAppearance();
       formUtils.cleanupForm();
+      currentCandidate = null;
     }
     triggerCtaButtonAvailability(canOperate);
   }
