@@ -2,7 +2,7 @@
   const currentUrl = window.location.href;
   const workUrlMatchPattern = new RegExp(/^https:\/\/www\.work\.ua(\/\w{0,})?\/resumes\/(\d+)\/?(?:\?.*)?$/);
   let workUrlMatch = currentUrl.match(workUrlMatchPattern);
-  const olxResumeUrlMatchPattern = new RegExp(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/obyavlenie\/\w{1,}/);
+  const olxResumeUrlMatchPattern = new RegExp(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/obyavlenie\/[\w\/]{1,}/);
   let olxResumeUrlMatch = currentUrl.match(olxResumeUrlMatchPattern);
   const olxApplyUrlMatchPattern = new RegExp(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/myaccount\/ep\/ad\/[\w\/]{1,}/);
   let olxApplyUrlMatch = currentUrl.match(olxApplyUrlMatchPattern);
