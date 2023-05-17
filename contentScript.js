@@ -7,17 +7,6 @@
   const olxApplyUrlMatchPattern = new RegExp(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/myaccount\/ep\/ad\/[\w\/]{1,}/);
   let olxApplyUrlMatch = currentUrl.match(olxApplyUrlMatchPattern);
 
-  // try if needed to open only on opened apply, but need to update logic
-  // cause after first page open the check might not find mathces and extension wont work after apply selected
-  // const olxApplyUrlMatch = currentUrl.match(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/myaccount\/ep\/ad\/\w{1,}\/\?applicationId.{1,}/);
-
-  // // prevent plugin open/functionality if not correct url
-  // if (!workUrlMatch && !olxResumeUrlMatch && !olxApplyUrlMatch) {
-  //   const ctaBtn = document.querySelector(".cta-button");
-  //   ctaBtn.classList.add("always-hidden");
-  //   // return;
-  // }
-
   let currentResumeId = null;
   let currentCandidate = null;
   let token = null;
@@ -54,13 +43,16 @@
         `%cHelper ${manifest.version}`,
         "color: white; background-color: #ff5252; text-shadow: 0 0 15px rgba(25,255,25,.5), 0 0 10px rgba(255,255,255,.5); padding: 3px 9px; border-radius: 5px; font-family:monospace; font-size: 20px; font-weight: bold;"
       );
+      //injecting plugin into the DOM
       const wrapper = document.createElement("div");
       wrapper.classList.add("plugin-window-wrapper");
       wrapper.innerHTML = html;
       document.body.appendChild(wrapper);
+
+      //initiating plugin appearance/functionality on first page visit
       updateByCurrentLocationScenario(currentUrl);
 
-      // get reference to all 5 states of plugin
+      // get reference to all 4 states of plugin
       const entranceWindowBlock = document.querySelector(".entrance-window");
       const fetchingStateBlock = document.querySelector(".fetching-state");
       const candidateInfoBlock = document.querySelector(".candidate-info");
@@ -81,6 +73,7 @@
         sendSubmitRequestMessage();
       });
 
+      // communicating with background.js
       chrome.runtime.onMessage.addListener(async (message) => {
         const { type } = message;
         // TOKEN_INFO -- listening for token info appearance in cookie storage
@@ -134,7 +127,6 @@
         }
         if (type === "URL_CHANGED") {
           onUrlChanged(message);
-          console.log(message);
         }
 
         // trigger currentCandidate changes events
@@ -152,6 +144,7 @@
         }
       });
 
+      // common action listeners
       const ctaBtn = document.querySelector(".cta-button");
       ctaBtn.addEventListener("click", () => {
         proceedPLuginTriggered();
@@ -415,19 +408,18 @@
   function triggerCtaButtonAvailability(canShow) {
     const ctaBtn = document.querySelector(".cta-button");
     if (ctaBtn) {
-      console.log("changing cta view because ", { canShow });
       canShow ? ctaBtn.classList.remove("always-hidden") : ctaBtn.classList.add("always-hidden");
     }
   }
 
   function updateByCurrentLocationScenario(url) {
-    // currentCandidate = null;
     workUrlMatch = url.match(workUrlMatchPattern);
     olxResumeUrlMatch = url.match(olxResumeUrlMatchPattern);
     olxApplyUrlMatch = url.match(olxApplyUrlMatchPattern);
     canOperate = !!workUrlMatch || !!olxResumeUrlMatch || !!olxApplyUrlMatch;
     formUtils.cleanupFormErrors();
 
+    // cleanup currentCandidate, form values and close plugin window on condition
     if (((!canOperate || olxResumeUrlMatch) && isPluginWindowOpen) || shouldRefresh) {
       const successBlock = document.querySelector(".add-success");
       if (!successBlock.classList.contains("hide")) {
