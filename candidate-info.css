@@ -46,8 +46,9 @@ option[value="separator"] {
   pointer-events: none;
 }
 
-option {
+.ats-destination-select option {
   max-width: 100% !important;
+  font-family: "Times New Roman", Times, serif !important;
 }
 
 .candidate-section-title {
