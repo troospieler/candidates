@@ -1,5 +1,5 @@
 (async () => {
-  let currentUrl = window.location.href;
+  const currentUrl = window.location.href;
   const workUrlMatchPattern = new RegExp(/^https:\/\/www\.work\.ua(\/\w{0,})?\/resumes\/(\d+)\/?(?:\?.*)?$/);
   let workUrlMatch = currentUrl.match(workUrlMatchPattern);
   const olxResumeUrlMatchPattern = new RegExp(/^https:\/\/www\.olx\.ua((\/\w{0,}){1,})?\/obyavlenie\/[\w\/]{1,}/);
@@ -27,12 +27,6 @@
   const utils = await import(utilsSrc);
   const formUtilsSrc = chrome.runtime.getURL("form-utils.js");
   const formUtils = await import(formUtilsSrc);
-  const olxApplyPageHelpersSrc = chrome.runtime.getURL("olx-apply-page-helpers.js");
-  const olxApplyPageHelpers = await import(olxApplyPageHelpersSrc);
-  const olxResumePageHelpersSrc = chrome.runtime.getURL("olx-resume-page-helpers.js");
-  const olxResumePageHelpers = await import(olxResumePageHelpersSrc);
-  const workResumePageHelpersSrc = chrome.runtime.getURL("work-resume-page-helpers.js");
-  const workResumePageHelpers = await import(workResumePageHelpersSrc);
 
   //injecting popup.html to current web page
   await fetch(chrome.runtime.getURL("popup.html"))
@@ -129,19 +123,19 @@
           onUrlChanged(message);
         }
 
-        // trigger currentCandidate changes events
-        document.addEventListener("formUtilsMessage", function (event) {
-          onFormUtilsMessageEvent(event.detail);
-        });
-
-        document.addEventListener("resumeChangeMessage", function (event) {
-          onResumeChangeMessageEvent(event.detail);
-        });
-
         // USE FOR LOGGING DATA FROM BACKGROUND CONTEXT
         if (type === "LOGGING_DATA_TO_CONSOLE") {
           console.log(message);
         }
+      });
+
+      // trigger currentCandidate changes events
+      document.addEventListener("formUtilsMessage", function (event) {
+        onFormUtilsMessageEvent(event.detail);
+      });
+
+      document.addEventListener("resumeChangeMessage", function (event) {
+        onResumeChangeMessageEvent(event.detail);
       });
 
       // common action listeners
@@ -231,15 +225,21 @@
       // SPLIT BY URL CONDITION
       // WORK RESUME PAGE
       if (workUrlMatch) {
+        const workResumePageHelpersSrc = chrome.runtime.getURL("work-resume-page-helpers.js");
+        const workResumePageHelpers = await import(workResumePageHelpersSrc);
         await workResumePageHelpers.onWorkResumePageScenario(token);
       }
       // OLX RESUME PAGE
       if (olxResumeUrlMatch) {
+        const olxResumePageHelpersSrc = chrome.runtime.getURL("olx-resume-page-helpers.js");
+        const olxResumePageHelpers = await import(olxResumePageHelpersSrc);
         await olxResumePageHelpers.onOlxResumePageScenario(currentCandidate, token);
       }
 
       // OLX APPLY PAGE
       if (olxApplyUrlMatch) {
+        const olxApplyPageHelpersSrc = chrome.runtime.getURL("olx-apply-page-helpers.js");
+        const olxApplyPageHelpers = await import(olxApplyPageHelpersSrc);
         await olxApplyPageHelpers.onOlxApplyPageScenario(currentCandidate, token);
       }
 
@@ -249,7 +249,7 @@
       ) {
         const noContactsWarning = document.querySelector(".no-contacts-on-page");
         noContactsWarning.classList.remove("hide");
-        highlightInput();
+        formUtils.highlightInput();
       }
 
       const select = document.querySelector(".ats-destination-select");
@@ -293,7 +293,7 @@
     if (!formValue["candidate-phones"] && !formValue["candidate-emails"]) {
       hasNoContactsError = true;
       noContactsWarning.classList.remove("hide");
-      highlightInput();
+      formUtils.highlightInput();
     }
 
     if (!!formValue["candidate-emails"] && !EMAIL_PATTERN.test(formValue["candidate-emails"])) {
@@ -301,7 +301,10 @@
       incorrectEmail.classList.remove("hide");
     }
 
-    if (!!formValue["candidate-phones"] && !PHONE_PATTERN.test(cleanedUpPhoneValue(formValue["candidate-phones"]))) {
+    if (
+      !!formValue["candidate-phones"] &&
+      !PHONE_PATTERN.test(formUtils.cleanedUpPhoneValue(formValue["candidate-phones"]))
+    ) {
       hasCandidatePhoneError = true;
       incorrectPhone.classList.remove("hide");
     }
@@ -376,29 +379,8 @@
     candidateInfoBlock.classList.remove("hide");
   }
 
-  function highlightInput() {
-    const email = document.querySelector("#candidateInfoEmail");
-    const phone = document.querySelector("#candidateInfoPhone");
-    email.classList.add("highlighting-input");
-    phone.classList.add("highlighting-input");
-    email.addEventListener("animationend", (e) => {
-      if (e.animationName === "highlighting") {
-        email.classList.remove("highlighting-input");
-      }
-    });
-    phone.addEventListener("animationend", (e) => {
-      if (e.animationName === "highlighting") {
-        phone.classList.remove("highlighting-input");
-      }
-    });
-  }
-
   function setToken(message) {
     token = message.jwtToken ? "Bearer " + message.jwtToken : null;
-  }
-
-  function cleanedUpPhoneValue(input) {
-    return input.replace(/[\(\)\+\s-]/gm, "");
   }
 
   function onUrlChanged(message) {
@@ -437,7 +419,7 @@
     const { text, resumePhotoLink, resumeTitle } = currentCandidate ?? {};
     const baseInput = {
       fullName: formValue["candidate-name"]?.length ? formValue["candidate-name"] : null,
-      phones: [cleanedUpPhoneValue(formValue["candidate-phones"])],
+      phones: [formUtils.cleanedUpPhoneValue(formValue["candidate-phones"])],
       emails: [formValue["candidate-emails"]],
       ...(formValue["ats-destination"] === "db" ? {} : { projectId: formValue["ats-destination"] }),
       ...(resumePhotoLink ? { photoUrl: resumePhotoLink } : {}),
@@ -462,16 +444,16 @@
       return;
     }
     const { name, phones, emails } = data;
-    switch (true) {
-      case !!name:
-        currentCandidate.name = name;
+    const events = {
+      name: () => (currentCandidate.name = name),
+      phones: () => (currentCandidate.phones = phones),
+      emails: () => (currentCandidate.emails = emails),
+    };
+    for (const prop in events) {
+      if (data.hasOwnProperty(prop)) {
+        events[prop]();
         break;
-      case !!phones:
-        currentCandidate.phones = phones;
-        break;
-      case !!emails:
-        currentCandidate.emails = emails;
-        break;
+      }
     }
   };
 
@@ -480,19 +462,17 @@
       return;
     }
     const { text, resumeId, resumePhotoLink, resumeTitle } = data;
-    switch (true) {
-      case !!text:
-        currentCandidate.text = text;
+    const events = {
+      text: () => (currentCandidate.text = text),
+      resumeId: () => (currentResumeId = resumeId),
+      resumePhotoLink: () => (currentCandidate.resumePhotoLink = resumePhotoLink),
+      resumeTitle: () => (currentCandidate.resumeTitle = resumeTitle),
+    };
+    for (const prop in events) {
+      if (data.hasOwnProperty(prop)) {
+        events[prop]();
         break;
-      case !!resumeId:
-        currentResumeId = resumeId;
-        break;
-      case !!resumePhotoLink:
-        currentCandidate.resumePhotoLink = resumePhotoLink;
-        break;
-      case !!resumeTitle:
-        currentCandidate.resumeTitle = resumeTitle;
-        break;
+      }
     }
   };
 })();

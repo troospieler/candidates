@@ -100,3 +100,24 @@ export function cleanupForm() {
   prefillCandidateNameValue(null);
   cleanupFormErrors();
 }
+
+export function cleanedUpPhoneValue(input) {
+  return input.replace(/[\(\)\+\s-]/gm, "");
+}
+
+export function highlightInput() {
+  const email = document.querySelector("#candidateInfoEmail");
+  const phone = document.querySelector("#candidateInfoPhone");
+  email.classList.add("highlighting-input");
+  phone.classList.add("highlighting-input");
+  email.addEventListener("animationend", (e) => {
+    if (e.animationName === "highlighting") {
+      email.classList.remove("highlighting-input");
+    }
+  });
+  phone.addEventListener("animationend", (e) => {
+    if (e.animationName === "highlighting") {
+      phone.classList.remove("highlighting-input");
+    }
+  });
+}
